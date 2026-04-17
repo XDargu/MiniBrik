@@ -147,7 +147,7 @@ dirLight.shadow.camera.top = 10;
 dirLight.shadow.mapSize.height = 1024;
 dirLight.shadow.mapSize.width = 1024;
 dirLight.shadow.camera.updateProjectionMatrix();
-dirLight.position.set(10,20,10);
+dirLight.position.set(-10,20,10);
 dirLight.castShadow = true
 scene.add(dirLight);
 
@@ -239,15 +239,17 @@ const BRICKS = {
   3: { name: "2x1", w:2, d:1, type:"box" },
   4: { name: "1x4", w:1, d:4, type:"box" },
   5: { name: "1x2", w:1, d:2, type:"box" },
-  6: { name: "1x1", w:1, d:1, type:"box" },
+  6: { name: "1x3", w:1, d:3, type:"box" },
+  7: { name: "1x1", w:1, d:1, type:"box" },
 
-  7: { name: "1x2 Tile", w:1, d:2, type:"tile" },
+  8: { name: "1x2 Tile", w:1, d:2, type:"tile" },
+  9: { name: "1x1 Tile", w:1, d:1, type:"tile" },
 
-  8: { name: "2x2 Round", w:2, d:2, type:"cylinder" },
-  9: { name: "1x1 Round", w:1, d:1, type:"cylinder", hollowStud: true },
+  10: { name: "2x2 Round", w:2, d:2, type:"cylinder" },
+  11: { name: "1x1 Round", w:1, d:1, type:"cylinder", hollowStud: true },
 
   
-  10:{ name: "1x1 Cone", w:1, d:1, type:"cone", hollowStud: true },
+  12:{ name: "1x1 Cone", w:1, d:1, type:"cone", hollowStud: true },
   
   /*11:{ name: "2x2_slope", w:2, d:2, type:"slope" },
   12:{ name: "Slope 45 2x1 (3040)", w:2, d:1, type:"slope_3040" },
@@ -302,8 +304,8 @@ const key = (x,y,z)=>`${x},${y},${z}`;
 const isOccupied = (x,y,z)=>occupied.has(key(x,y,z));
 const setOccupied = (x,y,z)=>occupied.add(key(x,y,z));
 
-function columnHeight(x,z){
-  let y=0; while(isOccupied(x,y,z)) y++; return y;
+function columnHeight(x,y,z){
+  while(isOccupied(x,y,z)) y++; return y;
 }
 
 // Serialization
@@ -495,6 +497,7 @@ function undo(){
   redoStack.push(h);
 
   rebuild();
+  updateShareURL();
 }
 
 function redo(){
@@ -504,6 +507,7 @@ function redo(){
   scene.add(h.group);
   blockHistory.push(h);
   occupy(h.x,h.y,h.z,h.w,h.d);
+  updateShareURL();
 }
 
 function rebuild(){
@@ -517,11 +521,11 @@ function getFootprint(){
   return (rotation % 180 === 0) ? [b.w,b.d] : [b.d,b.w];
 }
 
-function computePlacement(x,z,w,d){
+function computePlacement(x,y,z,w,d){
   let maxY=0, support=false;
 
   for(let i=0;i<w;i++) for(let j=0;j<d;j++){
-    maxY=Math.max(maxY,columnHeight(x+i,z+j));
+    maxY=Math.max(maxY,columnHeight(x+i,y,z+j));
   }
 
   for(let i=0;i<w;i++) for(let j=0;j<d;j++){
@@ -552,14 +556,19 @@ function shiftBlock(body)
 
 function createBrick(w,d,color,transparent=false,type="box",hollowStud=false){
   const group=new THREE.Group();
-  const mat=new THREE.MeshStandardMaterial({color, transparent, opacity:transparent ? 0.5 : 1, roughness: 0.8});
+
+  const mat=new THREE.MeshStandardMaterial({
+    color, 
+    transparent, 
+    opacity:transparent ? 0.5 : 1, 
+    roughness: 0.8,
+  });
 
   const studGeoToUse = hollowStud ? hollowStudGeo : studGeo;
   let body;
 
   if(type === "box"){
       body=new THREE.Mesh(new THREE.BoxGeometry(w-gap,1-gap*0.5,d-gap),mat);
-      shiftBlock(body);
 
     for(let i=0;i<w;i++) for(let j=0;j<d;j++){
       const stud=new THREE.Mesh(studGeoToUse,mat);
@@ -572,12 +581,10 @@ function createBrick(w,d,color,transparent=false,type="box",hollowStud=false){
   else if(type === "tile"){
     body=new THREE.Mesh(new THREE.BoxGeometry(w - gap,0.2,d - gap),mat);
     body.position.y = -0.2 - studH;
-    shiftBlock(body);
   }
   else if(type === "cylinder"){
     const rad = w == 1 ? 0.45 : w/2;
     body=new THREE.Mesh(new THREE.CylinderGeometry(rad - gap, rad - gap, 1, 24),mat);
-    shiftBlock(body);
     for(let i=0;i<w;i++)
     {
       for(let j=0;j<d;j++){
@@ -609,7 +616,7 @@ function createBrick(w,d,color,transparent=false,type="box",hollowStud=false){
       mat
     );
     body.position.y += 0.1;
-    shiftBlock(body);
+    
 
     const stud = new THREE.Mesh(studGeoToUse,mat);
     stud.position.set(0,0.6,0);
@@ -653,7 +660,6 @@ function createBrick(w,d,color,transparent=false,type="box",hollowStud=false){
       flameMat
     );
 
-    shiftBlock(body);
   }
   else if(type === "door"){
     const frame = new THREE.Mesh(
@@ -701,6 +707,7 @@ function createBrick(w,d,color,transparent=false,type="box",hollowStud=false){
   body.receiveShadow = true;
 
   group.add(body);
+  shiftBlock(body);
   return {group,body};
 }
 
@@ -733,7 +740,7 @@ function snap(p){
 
 window.addEventListener("mousemove",e=>{
   mouse.x=(e.clientX/window.innerWidth)*2-1;
-  mouse.y=-(e.clientY/(window.innerHeight + 48))*2+1;
+  mouse.y=-(e.clientY/(window.innerHeight + 58))*2+1;
 
   raycaster.setFromCamera(mouse,camera);
   const hits=raycaster.intersectObjects(colliders);
@@ -744,9 +751,10 @@ window.addEventListener("mousemove",e=>{
   const [w,d]=getFootprint();
 
   const x=snap(p.x);
+  const y=snap(p.y);
   const z=snap(p.z);
 
-  const res=computePlacement(x,z,w,d);
+  const res=computePlacement(x,y,z,w,d);
 
   previewState={x,z,y:res.y,valid:res.valid,w,d};
 
