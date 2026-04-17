@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>MiniBrik - Build and share your brick creations!</title>
+  <meta name="description" content="MiniBrik is a small tool to create and share brick creationes, inspired by LEGO and other building toys">
+  <meta name="keywords" content="brick, lego, block, blocks, brik, mini, small, minibrik">
+  <meta name="author" content="Daniel Armesto">
+
+  <!-- JSON-LD structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "MiniBrik",
+    "url": "https://xdargu.github.io/MiniBrik/",
+    "description": "Brick editing tool to create and share small scenes.",
+    "applicationCategory": "DesignApplication",
+    "operatingSystem": "Web",
+    "author": {
+      "@type": "Person",
+      "name": "Daniel Armesto"
+    }
+  }
+  </script>
+<style>
+  body { margin: 0; overflow: hidden; background: #222; font-family: sans-serif; }
+  #ui {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.6);
+    padding: 12px;
+    border-radius: 10px;
+    color: white;
+  }
+  button { margin: 2px; padding: 6px 10px; border: none; border-radius: 3px; cursor: pointer; }
+  .active {
+    outline: 2px solid #128bd3;
+    background: #128bd3;
+    color: #f5f5f5; }
+</style>
+</head>
+<body>
+<div id="ui">
+  <div><b>Bricks</b></div>
+  <div id="brickButtons"></div>
+  <div style="margin-top:8px"><b>Colors</b></div>
+  <div id="colorButtons"></div>
+  <div style="margin-top:8px">R = rotate | Z = undo | Y = redo</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+<script>
+
+function createFlatRingGeometry(outerRadius, innerRadius, height) {
+  if (innerRadius >= outerRadius) {
+    throw new Error("innerRadius must be smaller than outerRadius");
+  }
+
+  const shape = new THREE.Shape();
+
+  // Outer circle
+  shape.absarc(0, 0, outerRadius, 0, Math.PI * 2, false);
+
+  // Inner hole
+  const hole = new THREE.Path();
+  hole.absarc(0, 0, innerRadius, 0, Math.PI * 2, true);
+
+  shape.holes.push(hole);
+
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    depth: height,
+    bevelEnabled: false,
+    curveSegments: 16,
+  });
+
+  // Center it vertically so it extrudes around origin
+  geometry.translate(0, 0, -height / 2);
+
+  geometry.rotateX(-Math.PI / 2);
+
+  geometry.computeVertexNormals();
+
+  return geometry;
+}
+
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x196c89);
+
+const aspect = window.innerWidth / window.innerHeight;
+const d = 20;
+const camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 0.1, 1000);
+
+let radius = 30;
+let theta = Math.PI/4;
+let phi = Math.PI/4;
+
+function updateCamera(){
+  camera.position.x = radius * Math.sin(phi) * Math.cos(theta);
+  camera.position.y = radius * Math.cos(phi);
+  camera.position.z = radius * Math.sin(phi) * Math.sin(theta);
+  camera.lookAt(0,0,0);
+}
+updateCamera();
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true
+document.body.appendChild(renderer.domElement);
+
+const skyColor = 0xB1E1FF;  // light blue
+const groundColor = 0xB97A20;  // brownish orange
+const intensity = 2;
+const light = new THREE.HemisphereLight(skyColor, groundColor, intensity);
+scene.add(light);
+
+const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+dirLight.shadow.camera.left = -10;
+dirLight.shadow.camera.right = 10;
+dirLight.shadow.camera.bottom = -10;
+dirLight.shadow.camera.top = 10;
+dirLight.shadow.mapSize.height = 1024;
+dirLight.shadow.mapSize.width = 1024;
+dirLight.shadow.camera.updateProjectionMatrix();
+dirLight.position.set(10,20,10);
+dirLight.castShadow = true
+scene.add(dirLight);
+
+// We assume lego height is 1
+const gap = 0.02;
+const shift = 0.005;
+const studH = 0.177;
+const studGeo=new THREE.CylinderGeometry(0.25, 0.25, studH, 16);
+const hollowStudGeo = createFlatRingGeometry(0.25, 0.15, studH);
+
+const gridSize = 20;
+const GRID_HALF = gridSize / 2; // 10
+
+function addBase()
+{
+    const group=new THREE.Group();
+    const mat = new THREE.MeshStandardMaterial({ color: 0x555555 });
+
+    const base = new THREE.Mesh(
+        new THREE.BoxGeometry(gridSize, 1/3, gridSize),
+        mat
+    );
+    base.position.y = -studH;
+    base.receiveShadow = true;
+
+
+    for(let i=0;i<gridSize;i++)
+    {
+      for(let j=0;j<gridSize;j++){
+        const stud=new THREE.Mesh(studGeo,mat);
+        stud.position.set(i-gridSize/2+0.5, studH*0.5, j-d/2+0.5);
+        stud.castShadow = true;
+        stud.receiveShadow = true;
+        group.add(stud);
+      }
+    }
+
+    group.add(base);
+
+    scene.add(group);
+    //scene.add(new THREE.GridHelper(gridSize, gridSize));
+
+    return group;
+}
+
+//CUSTOM GEO FUNCTIONS
+function makeSlope3040(w=2,d=1){
+  const geo = new THREE.BufferGeometry();
+
+  const hw=w/2, hd=d/2;
+
+  const vertices = new Float32Array([
+    // bottom
+    -hw,0,-hd,   hw,0,-hd,   hw,0,hd,
+    -hw,0,-hd,   hw,0,hd,    -hw,0,hd,
+
+    // sloped top face
+    -hw,1,-hd,   hw,1,-hd,   hw,0,hd,
+    -hw,1,-hd,   hw,0,hd,    -hw,0,hd,
+
+    // back face
+    -hw,0,-hd,   hw,0,-hd,   hw,1,-hd,
+    -hw,0,-hd,   hw,1,-hd,   -hw,1,-hd,
+
+    // sides
+    -hw,0,-hd,   -hw,0,hd,   -hw,1,-hd,
+    -hw,0,hd,    -hw,1,-hd,  -hw,1,hd,
+
+    hw,0,-hd,    hw,1,-hd,   hw,0,hd,
+    hw,0,hd,     hw,1,-hd,   hw,1,hd
+  ]);
+
+  geo.setAttribute("position", new THREE.BufferAttribute(vertices,3));
+  geo.computeVertexNormals();
+
+  return geo;
+}
+
+
+let base = addBase();
+
+const colliders = [base];
+
+// expanded LEGO set (decorative pieces added)
+const BRICKS = {
+  0: { name: "2x4", w:2, d:4, type:"box" },
+  1: { name: "2x3", w:2, d:3, type:"box" },
+  2: { name: "2x2", w:2, d:2, type:"box" },
+  3: { name: "2x1", w:2, d:1, type:"box" },
+  4: { name: "1x4", w:1, d:4, type:"box" },
+  5: { name: "1x2", w:1, d:2, type:"box" },
+  6: { name: "1x1", w:1, d:1, type:"box" },
+
+  7: { name: "1x2 Tile", w:1, d:2, type:"tile" },
+
+  8: { name: "2x2 Round", w:2, d:2, type:"cylinder" },
+  9: { name: "1x1 Round", w:1, d:1, type:"cylinder", hollowStud: true },
+
+  
+  10:{ name: "1x1 Cone", w:1, d:1, type:"cone", hollowStud: true },
+  
+  /*11:{ name: "2x2_slope", w:2, d:2, type:"slope" },
+  12:{ name: "Slope 45 2x1 (3040)", w:2, d:1, type:"slope_3040" },
+
+  13:{ name: "Classic Flag", w:1, d:1, type:"flag" },
+
+  14:{ name: "Flame (translucent)", w:1, d:1, type:"flame" },
+
+  15:{ name: "Door 1x4x5", w:1, d:4, type:"door" },
+
+  16:{ name: "Window 1x4x3", w:1, d:4, type:"window" }*/
+};
+
+const COLORS = [
+  // basic
+  0xff0000, // Red
+  0x0000ff, // Blue
+  0x00ff00, // Green
+  0xffff00, // Yellow
+  0xffffff, // White
+
+  // LEGO "modern architectural / modular" palette (approx BrickLink)
+  0xa0bc9a, // Sand Green
+  0xa0a5a9, // Light Bluish Gray
+  0x6c6e68, // Dark Bluish Gray
+  0xd7c59a, // Dark Tan
+  0xf2d2a9, // Nougat
+  0xc7a57b, // Medium Nougat
+  0x6b8ba4, // Sand Blue
+  0x607848, // Olive Green
+  0x3a3a3a, // Black
+  0xffc94a  // Bright Light Orange
+];
+
+function colorToIndex(hex) {
+  return COLORS.indexOf(hex);
+}
+
+function indexToColor(i) {
+  return COLORS[i] ?? COLORS[0];
+}
+
+let currentBrick = 0;
+let currentColor = COLORS[0];
+let rotation = 0;
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+const occupied = new Set();
+const key = (x,y,z)=>`${x},${y},${z}`;
+const isOccupied = (x,y,z)=>occupied.has(key(x,y,z));
+const setOccupied = (x,y,z)=>occupied.add(key(x,y,z));
+
+function columnHeight(x,z){
+  let y=0; while(isOccupied(x,y,z)) y++; return y;
+}
+
+// Serialization
+function encodeCoord(v) {
+  return v + GRID_HALF;
+}
+
+function decodeCoord(v) {
+  return v - GRID_HALF;
+}
+
+function packBrick(b) {
+  const id = b.id & 31;
+  const c  = b.c & 15; // 16 colors
+
+  const x = (b.x + GRID_HALF) & 31;
+  const z = (b.z + GRID_HALF) & 31;
+  const y = b.y & 31;
+
+  const r = b.r & 3;
+
+  return (
+    id |
+    (c << 5) |
+    (x << 9) |
+    (z << 14) |
+    (y << 19) |
+    (r << 24)
+  ) >>> 0;
+}
+
+function unpackBrick(v) {
+  return {
+    id: (v) & 31,
+    c:  (v >> 5) & 15,
+
+    x: ((v >> 9) & 31) - GRID_HALF,
+    z: ((v >> 14) & 31) - GRID_HALF,
+
+    y:  (v >> 19) & 31,
+    r:  (v >> 24) & 3
+  };
+}
+
+function encodeState() {
+  const arr = blockHistory.map(h =>
+    packBrick({
+      id: h.id,
+      c: colorToIndex(h.c),
+      x: h.x,
+      y: h.y,
+      z: h.z,
+      r: (h.r / 90) & 3
+    })
+  );
+
+  const buffer = new Uint32Array(arr);
+
+  return base64urlEncode(buffer);
+}
+
+function base64urlEncode(uint32Array) {
+  const bytes = new Uint8Array(uint32Array.buffer);
+
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
+function base64urlDecode(str) {
+  str = str.replace(/-/g, "+").replace(/_/g, "/");
+  while (str.length % 4) str += "=";
+
+  const binary = atob(str);
+
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+
+  return new Uint32Array(bytes.buffer);
+}
+
+function decodeState(str) {
+  const arr = base64urlDecode(str);
+
+  return Array.from(arr).map(v => {
+    const b = unpackBrick(v);
+    const def = BRICKS[b.id];
+
+    return {
+      id: b.id,
+      c: indexToColor(b.c),
+      x: b.x,
+      y: b.y,
+      z: b.z,
+      w: def.w,
+      d: def.d,
+      r: b.r * 90,
+      group: null
+    };
+  });
+}
+
+function updateShareURL() {
+  const encoded = encodeState();
+  const url = `${location.origin}${location.pathname}#${encoded}`;
+  history.replaceState(null, "", url);
+}
+
+function loadFromHistory(deserializedHistory) {
+  if (!deserializedHistory) return;
+
+  // reset everything
+  blockHistory.length = 0;
+  redoStack.length = 0;
+
+  // clear scene (keep base)
+  for (let i = scene.children.length - 1; i >= 0; i--) {
+    const obj = scene.children[i];
+    if (obj === preview) continue;
+    if (obj === base) continue;
+    if (obj.isLight) continue;
+    scene.remove(obj);
+  }
+
+  colliders.length = 1;
+  occupied.clear();
+
+  // rebuild from history
+  for (const h of deserializedHistory) {
+    const def = BRICKS[h.id];
+    if (!def) continue;
+
+    const obj = createBrick(def.w, def.d, h.c, false, def.type, def.hollowStud);
+
+    obj.group.rotation.y = h.r * Math.PI / 180;
+
+    const fw = (h.r % 180 === 0) ? def.w : def.d;
+    const fd = (h.r % 180 === 0) ? def.d : def.w;
+
+    obj.group.position.set(
+      h.x + fw / 2,
+      h.y + 0.5,
+      h.z + fd / 2
+    );
+
+    scene.add(obj.group);
+    colliders.push(obj.body);
+    occupy(h.x, h.y, h.z, fw, fd);
+
+    // IMPORTANT: rebuild runtime history exactly
+    blockHistory.push({
+      id: h.id,
+      c: h.c,
+      x: h.x,
+      y: h.y,
+      z: h.z,
+      w: fw,
+      d: fd,
+      r: h.r,
+      group: obj.group
+    });
+  }
+}
+
+// --------------------
+// HISTORY (UNDO/REDO)
+// --------------------
+let blockHistory = [];
+const redoStack = [];
+
+function pushHistory(entry){
+  blockHistory.push(entry);
+  redoStack.length = 0;
+}
+
+function undo(){
+  const h = blockHistory.pop();
+  if(!h) return;
+
+  scene.remove(h.group);
+  redoStack.push(h);
+
+  rebuild();
+}
+
+function redo(){
+  const h = redoStack.pop();
+  if(!h) return;
+
+  scene.add(h.group);
+  blockHistory.push(h);
+  occupy(h.x,h.y,h.z,h.w,h.d);
+}
+
+function rebuild(){
+  occupied.clear();
+  for(const h of blockHistory){ occupy(h.x,h.y,h.z,h.w,h.d); }
+}
+
+
+function getFootprint(){
+  const b = BRICKS[currentBrick];
+  return (rotation % 180 === 0) ? [b.w,b.d] : [b.d,b.w];
+}
+
+function computePlacement(x,z,w,d){
+  let maxY=0, support=false;
+
+  for(let i=0;i<w;i++) for(let j=0;j<d;j++){
+    maxY=Math.max(maxY,columnHeight(x+i,z+j));
+  }
+
+  for(let i=0;i<w;i++) for(let j=0;j<d;j++){
+    if(isOccupied(x+i,maxY,z+j)) return {valid:false,y:0};
+  }
+
+  for(let i=0;i<w;i++) for(let j=0;j<d;j++){
+    if(isOccupied(x+i,maxY-1,z+j)) support=true;
+  }
+
+  if(maxY===0) support=true;
+  return {valid:support,y:maxY};
+}
+
+function occupy(x,y,z,w,d){
+  for(let i=0;i<w;i++) for(let j=0;j<d;j++){
+    setOccupied(x+i,y,z+j);
+  }
+}
+
+function shiftBlock(body)
+{
+    const shiftVal = (Math.random() * 2 - 1) * shift;
+    body.position.x += shiftVal;
+    body.position.z += shiftVal;
+    body.rotation.y += shiftVal;
+}
+
+function createBrick(w,d,color,transparent=false,type="box",hollowStud=false){
+  const group=new THREE.Group();
+  const mat=new THREE.MeshStandardMaterial({color, transparent, opacity:transparent ? 0.5 : 1, roughness: 0.8});
+
+  const studGeoToUse = hollowStud ? hollowStudGeo : studGeo;
+  let body;
+
+  if(type === "box"){
+      body=new THREE.Mesh(new THREE.BoxGeometry(w-gap,1-gap*0.5,d-gap),mat);
+      shiftBlock(body);
+
+    for(let i=0;i<w;i++) for(let j=0;j<d;j++){
+      const stud=new THREE.Mesh(studGeoToUse,mat);
+      stud.position.set(i-w/2+0.5,0.6,j-d/2+0.5);
+      stud.castShadow = true;
+      stud.receiveShadow = true;
+      group.add(stud);
+    }
+  }
+  else if(type === "tile"){
+    body=new THREE.Mesh(new THREE.BoxGeometry(w - gap,0.2,d - gap),mat);
+    body.position.y = -0.2 - studH;
+    shiftBlock(body);
+  }
+  else if(type === "cylinder"){
+    const rad = w == 1 ? 0.45 : w/2;
+    body=new THREE.Mesh(new THREE.CylinderGeometry(rad - gap, rad - gap, 1, 24),mat);
+    shiftBlock(body);
+    for(let i=0;i<w;i++)
+    {
+      for(let j=0;j<d;j++){
+        const stud=new THREE.Mesh(studGeoToUse,mat);
+        stud.position.set(i-w/2+0.5,0.6,j-d/2+0.5);
+        stud.castShadow = true;
+        stud.receiveShadow = true;
+        group.add(stud);
+      }
+    }
+  }
+  else if(type === "slope"){
+    body=new THREE.Mesh(new THREE.BoxGeometry(w,1,d),mat);
+    body.rotation.x = -0.5;
+    body.position.y = 0.5;
+  }
+  else if(type === "slope_3040"){
+    const geo = new THREE.BoxGeometry(w,1,d,1,1,1);
+    geo.translate(0,0.5,0);
+    geo.vertices?.forEach?.(() => {}); // placeholder (ignored in r160)
+
+    body = new THREE.Mesh(geo, mat);
+    body.rotation.x = -Math.PI / 4;
+    body.position.y = 0.5;
+  }
+  else if(type === "cone"){
+    body = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.3, 0.45,0.8,20),
+      mat
+    );
+    body.position.y += 0.1;
+    shiftBlock(body);
+
+    const stud = new THREE.Mesh(studGeoToUse,mat);
+    stud.position.set(0,0.6,0);
+    stud.castShadow = true;
+    stud.receiveShadow = true;
+    group.add(stud);
+
+    const studBase = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.2, 16), mat);
+    studBase.position.set(0, -0.4, 0);
+    studBase.castShadow = true;
+    studBase.receiveShadow = true;
+    group.add(studBase);
+  }
+  else if(type === "flag"){
+    const pole = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.05,0.05,1.2,12),
+      new THREE.MeshStandardMaterial({color:0xdddddd})
+    );
+
+    const flag = new THREE.Mesh(
+      new THREE.PlaneGeometry(1,0.6),
+      mat
+    );
+
+    flag.position.set(0.5,0.3,0);
+
+    group.add(pole);
+    group.add(flag);
+
+    body = pole;
+  }
+  else if(type === "flame"){
+    const flameMat = new THREE.MeshStandardMaterial({
+      color:0xff7a18,
+      transparent:true,
+      opacity:0.7
+    });
+
+    body = new THREE.Mesh(
+      new THREE.ConeGeometry(0.4,1.2,12),
+      flameMat
+    );
+
+    shiftBlock(body);
+  }
+  else if(type === "door"){
+    const frame = new THREE.Mesh(
+      new THREE.BoxGeometry(w,1.8,d),
+      mat
+    );
+
+    const opening = new THREE.Mesh(
+      new THREE.BoxGeometry(w*0.7,1.5,d*1.1),
+      new THREE.MeshStandardMaterial({color:0x111111})
+    );
+
+    opening.position.y = -0.2;
+
+    group.add(frame);
+    group.add(opening);
+
+    body = frame;
+  }
+  else if(type === "window"){
+    const frame = new THREE.Mesh(
+      new THREE.BoxGeometry(w,1.5,d),
+      mat
+    );
+
+    const glass = new THREE.Mesh(
+      new THREE.PlaneGeometry(w*0.8,1),
+      new THREE.MeshStandardMaterial({
+        color:0xaad4ff,
+        transparent:true,
+        opacity:0.4
+      })
+    );
+
+    glass.position.z = d/2 + 0.01;
+
+    group.add(frame);
+    group.add(glass);
+
+    body = frame;
+  }
+
+
+  body.castShadow = true;
+  body.receiveShadow = true;
+
+  group.add(body);
+  return {group,body};
+}
+
+// --------------------
+// PREVIEW
+// --------------------
+let preview;
+let previewState={x:0,z:0,y:0,valid:false};
+
+function updatePreview(){
+  if(preview) scene.remove(preview);
+  const b=BRICKS[currentBrick];
+  const obj=createBrick(b.w,b.d,currentColor,true,b.type,b.hollowStud);
+  preview=obj.group;
+  preview.rotation.y=rotation*Math.PI/180;
+  scene.add(preview);
+}
+
+updatePreview();
+
+function updatePreviewColor(valid){
+  preview.traverse(o=>{
+    if(o.material) o.material.color.set(valid?currentColor:0xff0000);
+  });
+}
+
+function snap(p){
+  return Math.floor(p + gridSize/2) - gridSize/2;
+}
+
+window.addEventListener("mousemove",e=>{
+  mouse.x=(e.clientX/window.innerWidth)*2-1;
+  mouse.y=-(e.clientY/window.innerHeight)*2+1;
+
+  raycaster.setFromCamera(mouse,camera);
+  const hits=raycaster.intersectObjects(colliders);
+
+  if(!hits.length) return;
+
+  const p=hits[0].point;
+  const [w,d]=getFootprint();
+
+  const x=snap(p.x);
+  const z=snap(p.z);
+
+  const res=computePlacement(x,z,w,d);
+
+  previewState={x,z,y:res.y,valid:res.valid,w,d};
+
+  preview.position.set(x+w/2,res.y+0.5,z+d/2);
+  updatePreviewColor(res.valid);
+});
+
+window.addEventListener("click",e=>{
+  if(e.target.closest('#ui')) return;
+
+  const {x,z,y,valid,w,d}=previewState;
+  if(!valid) return;
+
+  const b=BRICKS[currentBrick];
+  const obj=createBrick(b.w,b.d,currentColor,false,b.type,b.hollowStud);
+  const brick=obj.group;
+  
+  brick.rotation.y = rotation*Math.PI/180;
+  
+  const [fw,fd]=getFootprint();
+  brick.position.set(x+fw/2,y+0.5,z+fd/2);
+  
+  scene.add(brick);
+
+  colliders.push(obj.body);
+  occupy(x,y,z,fw,fd);
+  pushHistory({
+    id: currentBrick,
+    c: currentColor,
+    x,
+    y,
+    z,
+    w: fw,
+    d: fd,
+    r: rotation,
+    group: brick
+  });
+  updateShareURL();
+});
+
+window.addEventListener("keydown",e=>{
+  if(e.key.toLowerCase()==='r'){ rotation=(rotation+90)%360; updatePreview(); }
+  if(e.key.toLowerCase()==='z') undo();
+  if(e.key.toLowerCase()==='y') redo();
+});
+
+// UI
+const brickButtonsDiv=document.getElementById("brickButtons");
+Object.keys(BRICKS).forEach(id=>{
+  const btn=document.createElement("button");
+  btn.textContent=BRICKS[id].name;
+  btn.onclick=()=>{currentBrick=id;updatePreview();updateActive();};
+  brickButtonsDiv.appendChild(btn);
+});
+
+const colorButtonsDiv=document.getElementById("colorButtons");
+COLORS.forEach(color=>{
+  const btn=document.createElement("button");
+  btn.style.background=`#${color.toString(16).padStart(6,'0')}`;
+  btn.onclick=()=>{currentColor=color;updatePreview();updateActive();};
+  colorButtonsDiv.appendChild(btn);
+});
+
+function updateActive(){
+  [...brickButtonsDiv.children].forEach(btn=>btn.classList.toggle("active",btn.textContent===BRICKS[currentBrick].name));
+  [...colorButtonsDiv.children].forEach(btn=>{
+    const c=parseInt(btn.style.background.slice(1),16);
+    btn.classList.toggle("active",c===currentColor);
+  });
+}
+updateActive();
+
+// FIXED zoom (orthographic)
+window.addEventListener("wheel",e=>{
+  const factor = e.deltaY < 0 ? 1.1 : 0.9;
+  camera.zoom *= factor;
+  camera.zoom = Math.max(0.5, Math.min(5, camera.zoom));
+  camera.updateProjectionMatrix();
+});
+
+// FIXED camera controls
+let dragging=false,prevX=0,prevY=0;
+window.addEventListener("mousedown",e=>{
+  if(e.button===2){dragging=true;prevX=e.clientX;prevY=e.clientY;}
+});
+window.addEventListener("mouseup",()=>dragging=false);
+window.addEventListener("mousemove",e=>{
+  if(!dragging) return;
+
+  const dx=e.clientX-prevX;
+  const dy=e.clientY-prevY;
+  prevX=e.clientX; prevY=e.clientY;
+
+  theta-=dx*0.005;
+  phi-=dy*0.005;
+
+  phi=Math.max(0.1,Math.min(Math.PI-0.1,phi));
+
+  updateCamera();
+});
+
+window.addEventListener("resize",()=>{
+  const aspect=window.innerWidth/window.innerHeight;
+  camera.left=-d*aspect;
+  camera.right=d*aspect;
+  camera.top=d;
+  camera.bottom=-d;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth,window.innerHeight);
+});
+
+function animate(){
+  requestAnimationFrame(animate);
+  renderer.render(scene,camera);
+}
+animate();
+
+(function initLoad() {
+  const hash = location.hash.slice(1);
+  if (!hash) return;
+
+  const state = decodeState(hash);
+  loadFromHistory(state);
+})();
+
+renderer.getContext().canvas.oncontextmenu = () => { return false }
+</script>
+</body>
+</html>
