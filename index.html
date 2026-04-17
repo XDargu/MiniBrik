@@ -161,6 +161,9 @@ const hollowStudGeo = createFlatRingGeometry(0.25, 0.15, studH);
 const gridSize = 20;
 const GRID_HALF = gridSize / 2; // 10
 
+let buildQueue = [];
+let isBuilding = false;
+
 function addBase()
 {
     const group=new THREE.Group();
@@ -441,41 +444,110 @@ function loadFromHistory(deserializedHistory) {
   colliders.length = 1;
   occupied.clear();
 
-  // rebuild from history
-  for (const h of deserializedHistory) {
-    const def = BRICKS[h.id];
-    if (!def) continue;
+  // build queue instead of instant placement
+  buildQueue = [...deserializedHistory];
+  totalBuildCount = buildQueue.length;
+  builtCount = 0;
+  isBuilding = true;
 
-    const obj = createBrick(def.w, def.d, h.c, false, def.type, def.hollowStud);
+  buildNextBrick();
+}
 
-    obj.group.rotation.y = h.r * Math.PI / 180;
+// ANimation
+let totalBuildCount = 0;
+let builtCount = 0;
 
-    const fw = (h.r % 180 === 0) ? def.w : def.d;
-    const fd = (h.r % 180 === 0) ? def.d : def.w;
+function getSpawnDelay(progress) {
+  const minDelay = 30;   // fastest (end)
+  const maxDelay = 200;  // slow start
 
-    obj.group.position.set(
-      h.x + fw / 2,
-      h.y + 0.5,
-      h.z + fd / 2
-    );
+  // ease-in (accelerating spawn rate)
+  const t = progress;
+  const eased = t * t * t; // cubic
 
-    scene.add(obj.group);
-    colliders.push(obj.body);
-    occupy(h.x, h.y, h.z, fw, fd);
+  return maxDelay - (maxDelay - minDelay) * eased;
+}
 
-    // IMPORTANT: rebuild runtime history exactly
-    blockHistory.push({
-      id: h.id,
-      c: h.c,
-      x: h.x,
-      y: h.y,
-      z: h.z,
-      w: fw,
-      d: fd,
-      r: h.r,
-      group: obj.group
-    });
+function buildNextBrick() {
+  if (!buildQueue.length) {
+    isBuilding = false;
+    return;
   }
+
+  const h = buildQueue.shift();
+  const def = BRICKS[h.id];
+  if (!def) {
+    buildNextBrick();
+    return;
+  }
+
+  const obj = createBrick(def.w, def.d, h.c, false, def.type, def.hollowStud);
+  const group = obj.group;
+
+  group.rotation.y = h.r * Math.PI / 180;
+
+  const fw = (h.r % 180 === 0) ? def.w : def.d;
+  const fd = (h.r % 180 === 0) ? def.d : def.w;
+
+  const targetY = h.y + 0.5;
+
+  // start high above
+  group.position.set(
+    h.x + fw / 2,
+    targetY + 5 + Math.random() * 2,
+    h.z + fd / 2
+  );
+
+  scene.add(group);
+
+  // animation
+  let velocity = 0;
+  const gravity = -0.05;
+
+  function fall() {
+    velocity += gravity;
+    group.position.y += velocity;
+
+    if (group.position.y <= targetY) {
+      group.position.y = targetY;
+
+      // finalize placement
+      colliders.push(obj.body);
+      occupy(h.x, h.y, h.z, fw, fd);
+
+      blockHistory.push({
+        id: h.id,
+        c: h.c,
+        x: h.x,
+        y: h.y,
+        z: h.z,
+        w: fw,
+        d: fd,
+        r: h.r,
+        group: group
+      });
+
+      // small "settle" effect
+      group.position.y += 0.1;
+      setTimeout(() => {
+        group.position.y = targetY;
+        buildNextBrick();
+      }, 50);
+
+      return;
+    }
+
+    requestAnimationFrame(fall);
+  }
+
+  fall();
+
+  builtCount++;
+
+  const progress = builtCount / totalBuildCount;
+  const delay = getSpawnDelay(progress);
+
+  setTimeout(buildNextBrick, delay);
 }
 
 // --------------------
@@ -763,6 +835,8 @@ window.addEventListener("mousemove",e=>{
 });
 
 window.addEventListener("click",e=>{
+    if (isBuilding) return;
+
   if(e.target.closest('#ui')) return;
 
   const {x,z,y,valid,w,d}=previewState;
