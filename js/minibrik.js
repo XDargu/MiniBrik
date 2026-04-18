@@ -19,7 +19,7 @@ const mouse = new THREE.Vector2();
 
 
 
-function createBrick(w,d,color,transparent=false,type="box",hollowStud=false){
+function createBrick(w,d,h,color,transparent=false,type="box",hollowStud=false){
   const group=new THREE.Group();
 
   const mat=new THREE.MeshStandardMaterial({
@@ -30,6 +30,7 @@ function createBrick(w,d,color,transparent=false,type="box",hollowStud=false){
   });
 
   const studGeoToUse = hollowStud ? hollowStudGeo : studGeo;
+  const is1x1 = w == 1 && d == 1;
   let body;
 
   if(type === "box"){
@@ -49,16 +50,33 @@ function createBrick(w,d,color,transparent=false,type="box",hollowStud=false){
   }
   else if(type === "cylinder"){
     const rad = w == 1 ? 0.45 : w/2;
-    body=new THREE.Mesh(new THREE.CylinderGeometry(rad - gap, rad - gap, 1, 24),mat);
+
+    if (is1x1)
+        body = new THREE.Mesh(new THREE.CylinderGeometry(rad - gap, rad - gap, 0.8, 24),mat);
+    else
+        body = new THREE.Mesh(new THREE.CylinderGeometry(rad - gap, rad - gap, 1, 24),mat);
+
     for(let i=0;i<w;i++)
     {
-      for(let j=0;j<d;j++){
+      for(let j=0;j<d;j++)
+      {
         const stud=new THREE.Mesh(studGeoToUse,mat);
         stud.position.set(i-w/2+0.5,0.6,j-d/2+0.5);
         stud.castShadow = true;
         stud.receiveShadow = true;
         group.add(stud);
       }
+    }
+
+    if (is1x1)
+    {
+        body.position.y += 0.1;
+
+        const studBase = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.2, 16), mat);
+        studBase.position.set(0, -0.4, 0);
+        studBase.castShadow = true;
+        studBase.receiveShadow = true;
+        group.add(studBase);
     }
   }
   else if(type === "slope"){
@@ -74,6 +92,26 @@ function createBrick(w,d,color,transparent=false,type="box",hollowStud=false){
     body = new THREE.Mesh(geo, mat);
     body.rotation.x = -Math.PI / 4;
     body.position.y = 0.5;
+  }
+  else if(type === "bar"){
+    body = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.2, 0.2, h, 20),
+      mat
+    );
+    body.position.y += h/2 - 0.5;
+
+    const studBase = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.4, 16), mat);
+    studBase.position.set(0, -0.3, 0);
+    studBase.castShadow = true;
+    studBase.receiveShadow = true;
+    group.add(studBase);
+
+    const studBase2 = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.2, 16), mat);
+    studBase2.position.set(0, -0.0, 0);
+    studBase2.castShadow = true;
+    studBase2.receiveShadow = true;
+    group.add(studBase2);
+
   }
   else if(type === "cone"){
     body = new THREE.Mesh(
@@ -191,7 +229,7 @@ function updatePreview(){
   if(preview) scene.remove(preview);
 
   const b = BRICKS[currentBrick];
-  const obj = createBrick(b.w,b.d,currentColor,true,b.type,b.hollowStud);
+  const obj = createBrick(b.w,b.d,b.h,currentColor,true,b.type,b.hollowStud);
   preview = obj.group;
   preview.rotation.y = rotation*Math.PI/180;
   scene.add(preview);
@@ -223,7 +261,9 @@ function updatePreviewPos()
   const y=snap(p.y);
   const z=snap(p.z);
 
-  const res = computePlacement(x, y, z, w, d, rotation);
+  const def = BRICKS[currentBrick];
+
+  const res = computePlacement(x, y, z, w, d, def.h, rotation);
   const realPos = computeBrickPos(x,res.y,z,w,d,rotation);
 
   previewState={x: x, z: z, y:res.y,valid:res.valid };
@@ -249,7 +289,7 @@ function placeBlock(brickId, x, y, z, rot, color)
     const blockPos = computeBrickPos(x, y, z, w, d, rot);
 
     const def=BRICKS[brickId];
-    const obj=createBrick(def.w,def.d,color,false,def.type,def.hollowStud);
+    const obj=createBrick(def.w,def.d,def.h,color,false,def.type,def.hollowStud);
     const group=obj.group;
 
     group.rotation.y = rot*Math.PI/180;
@@ -263,7 +303,7 @@ function placeBlock(brickId, x, y, z, rot, color)
     //console.log(blockPos)
 
     colliders.push(obj.body);
-    occupy(blockPos.x, y, blockPos.z, w, d);
+    occupy(blockPos.x, y, blockPos.z, w, d, def.h);
     const h = {
         id: brickId,
         c: color,

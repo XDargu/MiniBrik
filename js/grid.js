@@ -14,26 +14,28 @@ function getFootprint(brickId, rot) {
   return rot % 180 === 0 ? [b.w, b.d] : [b.d, b.w];
 }
 
-function computePlacement(x, y, z, w, d, rot) {
-  const cells = getOccupancy(x, y, z, w, d, rot);
+function computePlacement(x, y, z, w, d, h, rot) {
+  const baseCells = getOccupancy(x, y, z, w, d, 1, rot);
 
   let maxY = 0;
   let support = false;
 
-  // Find highest column among all cells
-  for (const c of cells) {
+  // Find highest column under footprint
+  for (const c of baseCells) {
     maxY = Math.max(maxY, columnHeight(c.x, y, c.z));
   }
 
-  // Check collision at that height
-  for (const c of cells) {
-    if (isOccupied(c.x, maxY, c.z)) {
+  // Check FULL volume collision
+  const fullCells = getOccupancy(x, maxY, z, w, d, h, rot);
+
+  for (const c of fullCells) {
+    if (isOccupied(c.x, c.y, c.z)) {
       return { valid: false, y: 0 };
     }
   }
 
-  // Check support
-  for (const c of cells) {
+  // Support check (only bottom layer matters)
+  for (const c of baseCells) {
     if (isOccupied(c.x, maxY - 1, c.z)) {
       support = true;
     }
@@ -59,25 +61,31 @@ function computeBrickPos(x, y, z, w, d, rot) {
   };
 }
 
-function getOccupancy(x, y, z, w, d, rot) {
+function getOccupancy(x, y, z, w, d, h, rot) {
   let cells = [];
   const brickPos = computeBrickPos(x, y, z, w, d, rot);
-  for (let i = 0; i < w; i++) {
-    for (let j = 0; j < d; j++) {
-      cells.push({
-        x: snap(brickPos.x + i - w / 2),
-        y,
-        z: snap(brickPos.z + j - d / 2),
-      });
+
+  for (let dy = 0; dy < h; dy++) {
+    for (let i = 0; i < w; i++) {
+      for (let j = 0; j < d; j++) {
+        cells.push({
+          x: snap(brickPos.x + i - w / 2),
+          y: y + dy,
+          z: snap(brickPos.z + j - d / 2),
+        });
+      }
     }
   }
+
   return cells;
 }
 
-function occupy(x, y, z, w, d) {
-  for (let i = 0; i < w; i++) {
-    for (let j = 0; j < d; j++) {
-      setOccupied(snap(x + i - w / 2), y, snap(z + j - d / 2));
+function occupy(x, y, z, w, d, h, rot) {
+  for (let dx = 0; dx < w; dx++) {
+    for (let dy = 0; dy < h; dy++) {
+      for (let dz = 0; dz < d; dz++) {
+        setOccupied(snap(x + dx - w / 2), y + dy, snap(z + dz - d / 2));
+      }
     }
   }
 }

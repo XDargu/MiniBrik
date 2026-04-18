@@ -1,28 +1,28 @@
 const BRICKS = {
-  0: { name: "2x4", w:2, d:4, type:"box" },
-  1: { name: "2x3", w:2, d:3, type:"box" },
-  2: { name: "2x2", w:2, d:2, type:"box" },
-  3: { name: "2x1", w:2, d:1, type:"box" },
-  4: { name: "1x4", w:1, d:4, type:"box" },
-  5: { name: "1x3", w:1, d:3, type:"box" },
-  6: { name: "1x1", w:1, d:1, type:"box" },
+  0: { name: "2x4", w:2, d:4, h:1, type:"box" },
+  1: { name: "2x3", w:2, d:3, h:1, type:"box" },
+  2: { name: "2x2", w:2, d:2, h:1, type:"box" },
+  3: { name: "2x1", w:2, d:1, h:1, type:"box" },
+  4: { name: "1x4", w:1, d:4, h:1, type:"box" },
+  5: { name: "1x3", w:1, d:3, h:1, type:"box" },
+  6: { name: "1x1", w:1, d:1, h:1, type:"box" },
 
-  7: { name: "1x2 Tile", w:1, d:2, type:"tile" },
-  8: { name: "1x1 Tile", w:1, d:1, type:"tile" },
+  7: { name: "1x2 Tile", w:1, d:2, h:1, type:"tile" },
+  8: { name: "1x1 Tile", w:1, d:1, h:1, type:"tile" },
 
-  9: { name: "2x2 Round", w:2, d:2, type:"cylinder" },
-  10: { name: "1x1 Round", w:1, d:1, type:"cylinder", hollowStud: true },
-
+  9: { name: "2x2 Round", w:2, d:2, h:1, type:"cylinder" },
+  10: { name: "1x1 Round", w:1, d:1, h:1, type:"cylinder", hollowStud: true },
   
-  11:{ name: "1x1 Cone", w:1, d:1, type:"cone", hollowStud: true },
+  11:{ name: "1x1 Cone", w:1, d:1, h:1, type:"cone", hollowStud: true },
+  12:{ name: "1x4 Bar", w:1, d:1, h:4,  type:"bar" },
 };
 
 const COLORS = [
   // basic
-  0xff0000, // Red
-  0x0000ff, // Blue
-  0x00ff00, // Green
-  0xffff00, // Yellow
+  0xe74c3c, // soft red
+  0x3b82f6, // modern blue
+  0x22c55e, // clean green
+  0xfbbf24, // warm yellow
   0xffffff, // White
 
   // LEGO "modern architectural / modular" palette (approx BrickLink)

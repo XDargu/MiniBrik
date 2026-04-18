@@ -31,15 +31,17 @@ function redo(){
   blockHistory.push(h);
   colliders.push(h.collider);
   const blockPos = computeBrickPos(h.x, h.y, h.z, h.w, h.d, h.r);
-  occupy(blockPos.x,h.y,blockPos.z,h.w,h.d);
+  const def = BRICKS[h.id];
+  occupy(blockPos.x,h.y,blockPos.z,h.w,h.d,def.h);
   updateShareURL();
 }
 
 function rebuild(){
   occupied.clear();
   for(const h of blockHistory){ 
+    const def = BRICKS[h.id];
     const blockPos = computeBrickPos(h.x, h.y, h.z, h.w, h.d, h.r);
-    occupy(blockPos.x,h.y,blockPos.z,h.w,h.d);
+    occupy(blockPos.x,h.y,blockPos.z,h.w,h.d, def.h);
   }
 }
 
