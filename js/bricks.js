@@ -9,8 +9,8 @@ const BRICKS = {
   5: { name: "1x3", w:1, d:3, h: brickH, type:"box" },
   6: { name: "1x1", w:1, d:1, h: brickH, type:"box" },
 
-  7: { name: "1x2 Tile", w:1, d:2, h: brickH, type:"tile" },
-  8: { name: "1x1 Tile", w:1, d:1, h: brickH, type:"tile" },
+  7: { name: "1x2 Tile", w:1, d:2, h: 1, type:"tile" },
+  8: { name: "1x1 Tile", w:1, d:1, h: 1, type:"tile" },
 
   9: { name: "2x2 Round", w:2, d:2, h: brickH, type:"cylinder" },
   10: { name: "1x1 Round", w:1, d:1, h: brickH, type:"cylinder", hollowStud: true },

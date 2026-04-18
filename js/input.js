@@ -1,5 +1,4 @@
 window.addEventListener("mousemove", (e) => {
-
   const rect = renderer.domElement.getBoundingClientRect();
 
   mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
@@ -34,42 +33,73 @@ window.addEventListener("keydown", (e) => {
 });
 
 // UI
-const brickButtonsDiv = document.getElementById("brickButtons");
-Object.keys(BRICKS).forEach((id) => {
-  const btn = document.createElement("button");
-  btn.textContent = BRICKS[id].name;
-  btn.onclick = () => {
-    currentBrick = id;
-    updatePreview();
-    updateActive();
-  };
-  brickButtonsDiv.appendChild(btn);
-});
+function initUI() {
+  const brickButtonsDiv = document.getElementById("brickButtons");
 
-const colorButtonsDiv = document.getElementById("colorButtons");
+  Object.keys(BRICKS).forEach((id) => {
+    const def = BRICKS[id];
 
-COLORS.forEach((color) => {
-  const btn = document.createElement("button");
-  btn.style.background = `#${color.toString(16).padStart(6, "0")}`;
-  btn.dataset.color = color;
-  btn.onclick = () => {
-    currentColor = color;
-    updatePreview();
-    updateActive();
-  };
-  colorButtonsDiv.appendChild(btn);
-});
+    const btn = document.createElement("button");
+    btn.dataset.brickId = id;
 
-function updateActive() {
-  [...brickButtonsDiv.children].forEach((btn) =>
-    btn.classList.toggle(
-      "active",
-      btn.textContent === BRICKS[currentBrick].name,
-    ),
-  );
-  [...colorButtonsDiv.children].forEach((btn) => {
-    const c = btn.dataset.color;
-    btn.classList.toggle("active", c == currentColor);
+    btn.classList.add("brick-button")
+    const span = document.createElement("span");
+    span.textContent = def.name;
+
+    const img = document.createElement("img");
+    
+    btn.appendChild(span);
+    btn.appendChild(img);
+    btn.onclick = () => {
+      currentBrick = id;
+      updatePreview();
+      updateActive();
+    };
+    brickButtonsDiv.appendChild(btn);
   });
+
+  const colorButtonsDiv = document.getElementById("colorButtons");
+
+  COLORS.forEach((color) => {
+    const btn = document.createElement("button");
+    btn.style.background = `#${color.toString(16).padStart(6, "0")}`;
+    btn.dataset.color = color;
+    btn.onclick = () => {
+      currentColor = color;
+      updatePreview();
+      updateActive();
+      updateThumbnailsColor();
+    };
+    colorButtonsDiv.appendChild(btn);
+  });
+
+  function updateActive() {
+    [...brickButtonsDiv.children].forEach((btn) =>
+      btn.classList.toggle(
+        "active",
+        btn.textContent === BRICKS[currentBrick].name,
+      ),
+    );
+    [...colorButtonsDiv.children].forEach((btn) => {
+      const c = btn.dataset.color;
+      btn.classList.toggle("active", c == currentColor);
+    });
+  }
+
+  function updateThumbnailsColor()
+  {
+    [...brickButtonsDiv.children].forEach((btn) =>
+    {
+      const def = BRICKS[btn.dataset.brickId];
+      const img = btn.querySelector("img")
+      img.src = renderBrickPreview(
+        () =>
+          createBrick(def.w, def.d, def.h, currentColor, def.type, def.hollowStud).group,
+      );
+
+    });
+  }
+  
+  updateActive();
+  updateThumbnailsColor();
 }
-updateActive();

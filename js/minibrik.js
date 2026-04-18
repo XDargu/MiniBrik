@@ -7,7 +7,11 @@ let currentColor = COLORS[0];
 let rotation = 0;
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-let scene = buildEmptyScene(renderer);
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true
+document.body.appendChild(renderer.domElement);
+
+let scene = buildEmptyScene();
 let camera = setupCamera();
 
 let base = addBase();
@@ -68,9 +72,9 @@ function createBrick(w,d,h,color,type="box",hollowStud=false){
     const rad = w == 1 ? 0.45 : w/2;
 
     if (is1x1)
-        body = new THREE.Mesh(new THREE.CylinderGeometry(rad - gap, rad - gap, 0.8, 24),mat);
+        body = new THREE.Mesh(new THREE.CylinderGeometry(rad - gap, rad - gap, 0.8, 16),mat);
     else
-        body = new THREE.Mesh(new THREE.CylinderGeometry(rad - gap, rad - gap, 1, 24),mat);
+        body = new THREE.Mesh(new THREE.CylinderGeometry(rad - gap, rad - gap, 1, 16),mat);
 
     for(let i=0;i<w;i++)
     {
@@ -358,5 +362,6 @@ function renderScene(){
 renderScene();
 
 initLoad();
+initUI();
 
 renderer.getContext().canvas.oncontextmenu = () => { return false }

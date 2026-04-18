@@ -2,15 +2,10 @@ const skyColor = 0xB1E1FF;  // light blue
 const groundColor = 0xB97A20;  // brownish orange
 const intensity = 2;
 
-function buildEmptyScene(renderer)
+function buildEmptyScene()
 {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x196c89);
-
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true
-    document.body.appendChild(renderer.domElement);
-
 
     const light = new THREE.HemisphereLight(skyColor, groundColor, intensity);
     scene.add(light);
