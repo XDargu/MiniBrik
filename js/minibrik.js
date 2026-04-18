@@ -24,34 +24,19 @@ const materialsByColor = new Map(COLORS.map((color) => {
     })];
 }));
 
-const materialsByColorDoubleSided = COLORS.map((color) => {
-    return new THREE.MeshStandardMaterial({
+const materialsByColorDoubleSided = new Map(COLORS.map((color) => {
+    return [color, new THREE.MeshStandardMaterial({
         color, 
         roughness: 0.8,
-        side: THREE.FrontSide
-        
-    });
-})
-materialsByColorDoubleSided.shadowSide = THREE.FrontSide
+        side: THREE.DoubleSide
+    })];
+}));
 
-function createBrick(w,d,h,color,transparent=false,type="box",hollowStud=false){
+function createBrick(w,d,h,color,type="box",hollowStud=false){
   const group=new THREE.Group();
 
-  //const mat = materialsByColor[color];
-  const mat=new THREE.MeshStandardMaterial({
-    color, 
-    transparent, 
-    opacity:transparent ? 0.5 : 1, 
-    roughness: 0.8,
-  });
-
-  const mat2s=new THREE.MeshStandardMaterial({
-    color, 
-    transparent, 
-    opacity:transparent ? 0.5 : 1, 
-    roughness: 0.8,
-    side: THREE.DoubleSide
-  });
+  const mat = materialsByColor.get(color);
+  const mat2s = materialsByColorDoubleSided.get(color);
 
   const studGeoToUse = hollowStud ? hollowStudGeo : studGeo;
   const is1x1 = w == 1 && d == 1;
@@ -245,16 +230,41 @@ const previewTarget = new THREE.Mesh( sphere, material );
 scene.add(previewTarget)
 
 function updatePreview(){
-  if(preview) scene.remove(preview);
+  if(preview)
+  {
+    disposePreviewMaterial();
+    scene.remove(preview);
+  }
 
   const b = BRICKS[currentBrick];
-  const obj = createBrick(b.w,b.d,b.h,currentColor,true,b.type,b.hollowStud);
+  const obj = createBrick(b.w,b.d,b.h,currentColor,b.type,b.hollowStud);
+  
   preview = obj.group;
   preview.rotation.y = rotation*Math.PI/180;
   scene.add(preview);
+
+  clonePreviewMaterial();
 }
 
 updatePreview();
+
+function clonePreviewMaterial(){
+  preview.traverse(o=>{
+    if(o.material)
+    {
+        o.material = o.material.clone();
+        o.material.transparent = true;
+        o.material.opacity = 0.5;
+    }
+  });
+}
+
+function disposePreviewMaterial(){
+  preview.traverse(o=>{
+    if(o.material)
+        o.material = o.material.dispose();
+  });
+}
 
 function updatePreviewColor(valid){
   preview.traverse(o=>{
@@ -309,7 +319,7 @@ function placeBlock(brickId, x, y, z, rot, color)
     const blockPos = computeBrickPos(x, y, z, w, d, rot);
 
     const def=BRICKS[brickId];
-    const obj=createBrick(def.w,def.d,def.h,color,false,def.type,def.hollowStud);
+    const obj=createBrick(def.w,def.d,def.h,color,def.type,def.hollowStud);
     const group=obj.group;
 
     group.rotation.y = rot*Math.PI/180;
