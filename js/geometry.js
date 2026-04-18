@@ -58,6 +58,8 @@ function createLEGODishGeometry({
   // rim drop
   pts.push(new THREE.Vector2(radius, -depth));
 
+  pts.push(new THREE.Vector2(0, -depth * 0.5));
+
   const geo = new THREE.LatheGeometry(pts, segments);
 
   geo.computeVertexNormals();

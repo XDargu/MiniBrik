@@ -94,7 +94,7 @@ function initUI() {
       const img = btn.querySelector("img")
       img.src = renderBrickPreview(
         () =>
-          createBrick(def.w, def.d, def.h, currentColor, def.type, def.hollowStud).group,
+          createBrick(def.w, def.d, def.h, 0, currentColor, def.type, def.hollowStud).group,
       );
 
     });

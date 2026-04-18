@@ -36,7 +36,7 @@ const materialsByColorDoubleSided = new Map(COLORS.map((color) => {
     })];
 }));
 
-function createBrick(w,d,h,color,type="box",hollowStud=false){
+function createBrick(w,d,h,rot,color,type="box",hollowStud=false){
   const group=new THREE.Group();
 
   const mat = materialsByColor.get(color);
@@ -170,7 +170,6 @@ function createBrick(w,d,h,color,type="box",hollowStud=false){
     studBase.castShadow = true;
     studBase.receiveShadow = true;
     group.add(studBase);
-
   }
   else if(type === "door"){
     const frame = new THREE.Mesh(
@@ -219,6 +218,13 @@ function createBrick(w,d,h,color,type="box",hollowStud=false){
 
   group.add(body);
   shiftBlock(body);
+
+  // Special cases for rotation
+  /*if (type=="dish" && (rot == 90 || rot == 270))
+  {
+    group.rotation.x = Math.PI;
+  }*/
+
   return {group,body};
 }
 
@@ -241,10 +247,11 @@ function updatePreview(){
   }
 
   const b = BRICKS[currentBrick];
-  const obj = createBrick(b.w,b.d,b.h,currentColor,b.type,b.hollowStud);
+  const obj = createBrick(b.w,b.d,b.h,rotation,currentColor,b.type,b.hollowStud);
   
   preview = obj.group;
   preview.rotation.y = rotation*Math.PI/180;
+
   scene.add(preview);
 
   clonePreviewMaterial();
@@ -323,7 +330,7 @@ function placeBlock(brickId, x, y, z, rot, color)
     const blockPos = computeBrickPos(x, y, z, w, d, rot);
 
     const def=BRICKS[brickId];
-    const obj=createBrick(def.w,def.d,def.h,color,def.type,def.hollowStud);
+    const obj=createBrick(def.w,def.d,def.h,rot,color,def.type,def.hollowStud);
     const group=obj.group;
 
     group.rotation.y = rot*Math.PI/180;
