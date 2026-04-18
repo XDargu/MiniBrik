@@ -56,7 +56,7 @@ function computeBrickPos(x, y, z, w, d, rot) {
 
   return {
     x: x + (w / 2) * signX + offX + extraX,
-    y: y + 0.5,
+    y: y*0.3 + 0.5,
     z: z + (d / 2) * signZ + offZ + extraZ,
   };
 }

@@ -4,6 +4,7 @@ const debugMat=new THREE.MeshStandardMaterial({
     opacity: 0.5, 
     roughness: 0.8,
   });
+const debugGeom = new THREE.BoxGeometry(1, 0.3, 1)
 let occupiedDebug = [];
 function debugOccupy(){
   
@@ -16,8 +17,8 @@ function debugOccupy(){
             for(let z=-gridSize; z<gridSize; z++) {
                 if (isOccupied(x, y, z))
                 {
-                    let body=new THREE.Mesh(new THREE.BoxGeometry(1, 1.3, 1), debugMat);
-                    body.position.set(x+0.5,y+0.5,z+0.5);
+                    let body=new THREE.Mesh(debugGeom, debugMat);
+                    body.position.set(x+0.5,y/3 + 0.166,z+0.5);
                     scene.add(body);
                     occupiedDebug.push(body)
                 }

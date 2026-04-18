@@ -55,17 +55,24 @@ function createBrick(w,d,h,color,transparent=false,type="box",hollowStud=false){
 
   const studGeoToUse = hollowStud ? hollowStudGeo : studGeo;
   const is1x1 = w == 1 && d == 1;
+  const hNorm = h / brickH;
   let body;
 
   if(type === "box"){
-      body=new THREE.Mesh(new THREE.BoxGeometry(w-gap,1-gap*0.5,d-gap),mat);
+      const center = hNorm*0.5;
+      const diff = center - 0.5;
+      
+      body=new THREE.Mesh(new THREE.BoxGeometry(w-gap, hNorm-gap*0.5, d-gap), mat);
+      body.position.y = diff;
 
-    for(let i=0;i<w;i++) for(let j=0;j<d;j++){
-      const stud=new THREE.Mesh(studGeoToUse,mat);
-      stud.position.set(i-w/2+0.5,0.6,j-d/2+0.5);
-      stud.castShadow = true;
-      stud.receiveShadow = true;
-      group.add(stud);
+    for(let i=0;i<w;i++) {
+      for(let j=0;j<d;j++) {
+        const stud = new THREE.Mesh(studGeoToUse,mat);
+        stud.position.set(i-w/2+0.5, hNorm - 0.4, j-d/2+0.5);
+        stud.castShadow = true;
+        stud.receiveShadow = true;
+        group.add(stud);
+      }
     }
   }
   else if(type === "tile"){
@@ -119,10 +126,10 @@ function createBrick(w,d,h,color,transparent=false,type="box",hollowStud=false){
   }
   else if(type === "bar"){
     body = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.2, 0.2, h, 20),
+      new THREE.CylinderGeometry(0.2, 0.2, hNorm, 20),
       mat
     );
-    body.position.y += h/2 - 0.5;
+    body.position.y += hNorm/2 - 0.5;
 
     const studBase = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.4, 16), mat);
     studBase.position.set(0, -0.3, 0);
@@ -307,7 +314,7 @@ function placeBlock(brickId, x, y, z, rot, color)
 
     group.rotation.y = rot*Math.PI/180;
 
-    group.position.set(blockPos.x, y+0.5, blockPos.z);
+    group.position.set(blockPos.x, blockPos.y, blockPos.z);
 
     scene.add(group);
 

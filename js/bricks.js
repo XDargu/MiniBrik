@@ -1,22 +1,27 @@
+const brickH = 3;
+
 const BRICKS = {
-  0: { name: "2x4", w:2, d:4, h:1, type:"box" },
-  1: { name: "2x3", w:2, d:3, h:1, type:"box" },
-  2: { name: "2x2", w:2, d:2, h:1, type:"box" },
-  3: { name: "2x1", w:2, d:1, h:1, type:"box" },
-  4: { name: "1x4", w:1, d:4, h:1, type:"box" },
-  5: { name: "1x3", w:1, d:3, h:1, type:"box" },
-  6: { name: "1x1", w:1, d:1, h:1, type:"box" },
+  0: { name: "2x4", w:2, d:4, h: brickH, type:"box" },
+  1: { name: "2x3", w:2, d:3, h: brickH, type:"box" },
+  2: { name: "2x2", w:2, d:2, h: brickH, type:"box" },
+  3: { name: "1x2", w:2, d:1, h: brickH, type:"box" },
+  4: { name: "1x4", w:1, d:4, h: brickH, type:"box" },
+  5: { name: "1x3", w:1, d:3, h: brickH, type:"box" },
+  6: { name: "1x1", w:1, d:1, h: brickH, type:"box" },
 
-  7: { name: "1x2 Tile", w:1, d:2, h:1, type:"tile" },
-  8: { name: "1x1 Tile", w:1, d:1, h:1, type:"tile" },
+  7: { name: "1x2 Tile", w:1, d:2, h: brickH, type:"tile" },
+  8: { name: "1x1 Tile", w:1, d:1, h: brickH, type:"tile" },
 
-  9: { name: "2x2 Round", w:2, d:2, h:1, type:"cylinder" },
-  10: { name: "1x1 Round", w:1, d:1, h:1, type:"cylinder", hollowStud: true },
+  9: { name: "2x2 Round", w:2, d:2, h: brickH, type:"cylinder" },
+  10: { name: "1x1 Round", w:1, d:1, h: brickH, type:"cylinder", hollowStud: true },
   
-  11:{ name: "1x1 Cone", w:1, d:1, h:1, type:"cone", hollowStud: true },
-  12:{ name: "1x4 Bar", w:1, d:1, h:4,  type:"bar" },
+  11:{ name: "1x1 Cone", w:1, d:1, h: brickH, type:"cone", hollowStud: true },
+  12:{ name: "1x4 Bar", w:1, d:1, h: 4*brickH,  type:"bar" },
 
-  13:{ name: "Dish", w:1, d:1, h:1,  type:"dish", hollowStud: true },
+  13:{ name: "Dish", w:1, d:1, h:2,  type:"dish", hollowStud: true },
+
+  14: { name: "2x4 Flat", w:2, d:4, h: 1, type:"box" },
+  15: { name: "2x3 Flat", w:2, d:3, h: 1, type:"box" },
 };
 
 const COLORS = [
