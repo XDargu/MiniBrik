@@ -12,9 +12,9 @@ function debugOccupy(){
     for (let b of occupiedDebug)
       scene.remove(b);
 
-    for(let x=-gridSize; x<gridSize; x++) {
-        for(let y=-gridSize; y<gridSize; y++) {
-            for(let z=-gridSize; z<gridSize; z++) {
+    for(let x=-GRID_HALF; x<GRID_HALF; x++) {
+        for(let y=-GRID_HALF; y<GRID_HALF; y++) {
+            for(let z=-GRID_HALF; z<GRID_HALF; z++) {
                 if (isOccupied(x, y, z))
                 {
                     let body=new THREE.Mesh(debugGeom, debugMat);

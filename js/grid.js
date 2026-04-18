@@ -4,6 +4,12 @@ const key = (x, y, z) => `${x},${y},${z}`;
 const isOccupied = (x, y, z) => occupied.has(key(x, y, z));
 const setOccupied = (x, y, z) => occupied.add(key(x, y, z));
 
+function isOutsideGrid(x, y, z) {
+    return x < -GRID_HALF || x >= GRID_HALF 
+            || y < 0 || y > 127
+            || z < -GRID_HALF || z >= GRID_HALF 
+}
+
 function columnHeight(x, y, z) {
   while (isOccupied(x, y, z)) y++;
   return y;
@@ -29,7 +35,7 @@ function computePlacement(x, y, z, w, d, h, rot) {
   const fullCells = getOccupancy(x, maxY, z, w, d, h, rot);
 
   for (const c of fullCells) {
-    if (isOccupied(c.x, c.y, c.z)) {
+    if (isOutsideGrid(c.x,c.y,c.z) || isOccupied(c.x, c.y, c.z)) {
       return { valid: false, y: 0 };
     }
   }
