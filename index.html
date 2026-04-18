@@ -481,24 +481,15 @@ function buildNextBrick() {
     return;
   }
 
-  const obj = createBrick(def.w, def.d, h.c, false, def.type, def.hollowStud);
-  const group = obj.group;
+  let hist = placeBlock(h.id, h.x, h.y, h.z, h.r, h.c);
+  let group = hist.group;
 
-  group.rotation.y = h.r * Math.PI / 180;
-
-  const fw = (h.r % 180 === 0) ? def.w : def.d;
-  const fd = (h.r % 180 === 0) ? def.d : def.w;
-
-  const targetY = h.y + 0.5;
-
-  // start high above
+  const targetY = group.position.y;
   group.position.set(
-    h.x + fw / 2,
-    targetY + 5 + Math.random() * 2,
-    h.z + fd / 2
+    group.position.x,
+    group.position.y  + 5 + Math.random() * 2,
+    group.position.z
   );
-
-  scene.add(group);
 
   // animation
   let velocity = 0;
@@ -510,22 +501,6 @@ function buildNextBrick() {
 
     if (group.position.y <= targetY) {
       group.position.y = targetY;
-
-      // finalize placement
-      colliders.push(obj.body);
-      occupy(h.x, h.y, h.z, fw, fd);
-
-      blockHistory.push({
-        id: h.id,
-        c: h.c,
-        x: h.x,
-        y: h.y,
-        z: h.z,
-        w: fw,
-        d: fd,
-        r: h.r,
-        group: group
-      });
 
       // small "settle" effect
       group.position.y += 0.1;
@@ -578,19 +553,24 @@ function redo(){
 
   scene.add(h.group);
   blockHistory.push(h);
-  occupy(h.x,h.y,h.z,h.w,h.d);
+  const blockPos = computeBrickPos(h.x, h.y, h.z, h.w, h.d, h.r);
+  occupy(blockPos.x,h.y,blockPos.z,h.w,h.d);
   updateShareURL();
 }
 
 function rebuild(){
   occupied.clear();
-  for(const h of blockHistory){ occupy(h.x,h.y,h.z,h.w,h.d); }
+  for(const h of blockHistory){ 
+    const blockPos = computeBrickPos(h.x, h.y, h.z, h.w, h.d, h.r);
+    occupy(blockPos.x,h.y,blockPos.z,h.w,h.d);
+  }
 }
 
 
-function getFootprint(){
-  const b = BRICKS[currentBrick];
-  return (rotation % 180 === 0) ? [b.w,b.d] : [b.d,b.w];
+function getFootprint(brickId, rot)
+{
+  const b = BRICKS[brickId];
+  return (rot % 180 === 0) ? [b.w,b.d] : [b.d,b.w];
 }
 
 function computePlacement(x,y,z,w,d){
@@ -612,9 +592,41 @@ function computePlacement(x,y,z,w,d){
   return {valid:support,y:maxY};
 }
 
+function computeBrickPos(x, y, z, w, d, rot)
+{
+  const signX = rot == 90 ? -1 : 1;
+  const signZ = rot == 180 ? -1 : 1;
+  const offX = rot == 90 ? 1 : 0;
+  const offZ = rot == 180 ? 1 : 0;
+
+  return { 
+    x: x + (w/2 * signX) + offX,
+    y: y + 0.5, 
+    z: z + (d/2 * signZ) + offZ 
+  };
+}
+
+function getOccupancy(x, y, z, w, d, rot)
+{
+    let cells = [];
+    const brickPos = computeBrickPos(x,y,z,w,d,rot);
+    for(let i=0;i<w;i++) {
+        for(let j=0;j<d;j++) {
+            cells.push({
+                x: snap(brickPos.x+i - w/2),
+                y, 
+                z: snap(brickPos.z+j - d/2)
+            })
+        }
+    }
+    return cells;
+}
+
 function occupy(x,y,z,w,d){
-  for(let i=0;i<w;i++) for(let j=0;j<d;j++){
-    setOccupied(x+i,y,z+j);
+  for(let i=0;i<w;i++) {
+    for(let j=0;j<d;j++) {
+      setOccupied(snap(x+i - w/2), y, snap(z+j - d/2));
+    }
   }
 }
 
@@ -791,10 +803,11 @@ let previewState={x:0,z:0,y:0,valid:false};
 
 function updatePreview(){
   if(preview) scene.remove(preview);
-  const b=BRICKS[currentBrick];
-  const obj=createBrick(b.w,b.d,currentColor,true,b.type,b.hollowStud);
-  preview=obj.group;
-  preview.rotation.y=rotation*Math.PI/180;
+
+  const b = BRICKS[currentBrick];
+  const obj = createBrick(b.w,b.d,currentColor,true,b.type,b.hollowStud);
+  preview = obj.group;
+  preview.rotation.y = rotation*Math.PI/180;
   scene.add(preview);
 }
 
@@ -810,28 +823,77 @@ function snap(p){
   return Math.floor(p + gridSize/2) - gridSize/2;
 }
 
-window.addEventListener("mousemove",e=>{
-  mouse.x=(e.clientX/window.innerWidth)*2-1;
-  mouse.y=-(e.clientY/(window.innerHeight + 58))*2+1;
-
+function updatePreviewPos()
+{
   raycaster.setFromCamera(mouse,camera);
   const hits=raycaster.intersectObjects(colliders);
 
   if(!hits.length) return;
 
   const p=hits[0].point;
-  const [w,d]=getFootprint();
+  const [w,d]=getFootprint(currentBrick, rotation);
 
   const x=snap(p.x);
   const y=snap(p.y);
   const z=snap(p.z);
 
-  const res=computePlacement(x,y,z,w,d);
+  const occupancy = getOccupancy(x,y,z,w,d,rotation);
+  const res = computePlacement(x, y, z, w, d);
+  const realPos = computeBrickPos(x,res.y,z,w,d,rotation);
 
-  previewState={x,z,y:res.y,valid:res.valid,w,d};
-
-  preview.position.set(x+w/2,res.y+0.5,z+d/2);
+  previewState={x: x, z: z, y:res.y,valid:res.valid };
+  
+  preview.position.set(
+    realPos.x,
+    realPos.y,
+    realPos.z,
+  );
   updatePreviewColor(res.valid);
+}
+
+function placeBlock(brickId, x, y, z, rot, color)
+{
+    const [w,d]=getFootprint(brickId, rot);
+
+    const blockPos = computeBrickPos(x, y, z, w, d, rot);
+
+    const def=BRICKS[brickId];
+    const obj=createBrick(def.w,def.d,color,false,def.type,def.hollowStud);
+    const group=obj.group;
+
+    group.rotation.y = rot*Math.PI/180;
+
+    group.position.set(blockPos.x, y+0.5, blockPos.z);
+
+    scene.add(group);
+
+    //console.log("oth: ", w, d, rot)
+    //console.log("coords: ", x,y,z)
+    //console.log(blockPos)
+
+    colliders.push(obj.body);
+    occupy(blockPos.x, y, blockPos.z, w, d);
+    const h = {
+        id: brickId,
+        c: color,
+        x: x,
+        y,
+        z: z,
+        w: w,
+        d: d,
+        r: rot,
+        group: group
+    };
+    pushHistory(h);
+
+    return h;
+}
+
+window.addEventListener("mousemove",e=>{
+  mouse.x=(e.clientX/window.innerWidth)*2-1;
+  mouse.y=-(e.clientY/(window.innerHeight + 58))*2+1;
+
+  updatePreviewPos();
 });
 
 window.addEventListener("click",e=>{
@@ -839,38 +901,22 @@ window.addEventListener("click",e=>{
 
   if(e.target.closest('#ui')) return;
 
-  const {x,z,y,valid,w,d}=previewState;
+  const {x,z,y,valid}=previewState;
   if(!valid) return;
 
-  const b=BRICKS[currentBrick];
-  const obj=createBrick(b.w,b.d,currentColor,false,b.type,b.hollowStud);
-  const brick=obj.group;
-  
-  brick.rotation.y = rotation*Math.PI/180;
-  
-  const [fw,fd]=getFootprint();
-  brick.position.set(x+fw/2,y+0.5,z+fd/2);
-  
-  scene.add(brick);
+  placeBlock(currentBrick, x, y, z, rotation, currentColor)
 
-  colliders.push(obj.body);
-  occupy(x,y,z,fw,fd);
-  pushHistory({
-    id: currentBrick,
-    c: currentColor,
-    x,
-    y,
-    z,
-    w: fw,
-    d: fd,
-    r: rotation,
-    group: brick
-  });
   updateShareURL();
+  updatePreview();
+  updatePreviewPos();
 });
 
 window.addEventListener("keydown",e=>{
-  if(e.key.toLowerCase()==='r'){ rotation=(rotation+90)%360; updatePreview(); }
+  if(e.key.toLowerCase()==='r'){ 
+    rotation=(rotation+90)%360;
+    updatePreview();
+    updatePreviewPos();
+}
   if(e.key.toLowerCase()==='z') undo();
   if(e.key.toLowerCase()==='y') redo();
 });
@@ -953,6 +999,36 @@ animate();
   const state = decodeState(hash);
   loadFromHistory(state);
 })();
+
+
+const debugMat=new THREE.MeshStandardMaterial({
+    color: 0xff0000, 
+    transparent: true, 
+    opacity: 0.5, 
+    roughness: 0.8,
+  });
+let occupiedDebug = [];
+function debugOccupy(){
+  
+  
+    for (let b of occupiedDebug)
+      scene.remove(b);
+
+    for(let x=-gridSize; x<gridSize; x++) {
+        for(let y=-gridSize; y<gridSize; y++) {
+            for(let z=-gridSize; z<gridSize; z++) {
+                if (isOccupied(x, y, z))
+                {
+                    let body=new THREE.Mesh(new THREE.BoxGeometry(1, 1.3, 1), debugMat);
+                    body.position.set(x+0.5,y+0.5,z+0.5);
+                    scene.add(body);
+                    occupiedDebug.push(body)
+                }
+            }
+        }
+    }
+}
+//setInterval(debugOccupy, 300);
 
 renderer.getContext().canvas.oncontextmenu = () => { return false }
 </script>
