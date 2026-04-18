@@ -16,15 +16,17 @@ function buildEmptyScene(renderer)
     scene.add(light);
 
     const dirLight = new THREE.DirectionalLight(0xffffff, 2);
-    dirLight.shadow.camera.left = -10;
-    dirLight.shadow.camera.right = 10;
-    dirLight.shadow.camera.bottom = -10;
-    dirLight.shadow.camera.top = 10;
-    dirLight.shadow.mapSize.height = 1024;
-    dirLight.shadow.mapSize.width = 1024;
+    dirLight.shadow.camera.left = -12;
+    dirLight.shadow.camera.right = 12;
+    dirLight.shadow.camera.bottom = -12;
+    dirLight.shadow.camera.top = 12;
+    dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.mapSize.width = 2048;
     dirLight.shadow.camera.updateProjectionMatrix();
     dirLight.position.set(-10,20,10);
-    dirLight.castShadow = true
+    dirLight.castShadow = true;
+    dirLight.shadow.bias = -0.000038;
+    dirLight.shadow.normalBias = 0.00005;
     scene.add(dirLight);
 
     return scene;

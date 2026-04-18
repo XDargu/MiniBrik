@@ -15,6 +15,8 @@ const BRICKS = {
   
   11:{ name: "1x1 Cone", w:1, d:1, h:1, type:"cone", hollowStud: true },
   12:{ name: "1x4 Bar", w:1, d:1, h:4,  type:"bar" },
+
+  13:{ name: "Dish", w:1, d:1, h:1,  type:"dish", hollowStud: true },
 };
 
 const COLORS = [

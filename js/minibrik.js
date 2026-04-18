@@ -17,16 +17,40 @@ colliders.push(base);
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
+const materialsByColor = new Map(COLORS.map((color) => {
+    return [color, new THREE.MeshStandardMaterial({
+        color, 
+        roughness: 0.8
+    })];
+}));
 
+const materialsByColorDoubleSided = COLORS.map((color) => {
+    return new THREE.MeshStandardMaterial({
+        color, 
+        roughness: 0.8,
+        side: THREE.FrontSide
+        
+    });
+})
+materialsByColorDoubleSided.shadowSide = THREE.FrontSide
 
 function createBrick(w,d,h,color,transparent=false,type="box",hollowStud=false){
   const group=new THREE.Group();
 
+  //const mat = materialsByColor[color];
   const mat=new THREE.MeshStandardMaterial({
     color, 
     transparent, 
     opacity:transparent ? 0.5 : 1, 
     roughness: 0.8,
+  });
+
+  const mat2s=new THREE.MeshStandardMaterial({
+    color, 
+    transparent, 
+    opacity:transparent ? 0.5 : 1, 
+    roughness: 0.8,
+    side: THREE.DoubleSide
   });
 
   const studGeoToUse = hollowStud ? hollowStudGeo : studGeo;
@@ -133,35 +157,23 @@ function createBrick(w,d,h,color,transparent=false,type="box",hollowStud=false){
     studBase.receiveShadow = true;
     group.add(studBase);
   }
-  else if(type === "flag"){
-    const pole = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.05,0.05,1.2,12),
-      new THREE.MeshStandardMaterial({color:0xdddddd})
-    );
-
-    const flag = new THREE.Mesh(
-      new THREE.PlaneGeometry(1,0.6),
-      mat
-    );
-
-    flag.position.set(0.5,0.3,0);
-
-    group.add(pole);
-    group.add(flag);
-
-    body = pole;
-  }
-  else if(type === "flame"){
-    const flameMat = new THREE.MeshStandardMaterial({
-      color:0xff7a18,
-      transparent:true,
-      opacity:0.7
-    });
-
+  else if(type === "dish"){
     body = new THREE.Mesh(
-      new THREE.ConeGeometry(0.4,1.2,12),
-      flameMat
+      dishGeo,
+      mat2s
     );
+
+    const stud = new THREE.Mesh(studGeoToUse,mat);
+    stud.position.set(0,0.2,0);
+    stud.castShadow = true;
+    stud.receiveShadow = true;
+    group.add(stud);
+
+    const studBase = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.2, 16), mat);
+    studBase.position.set(0, -0.4, 0);
+    studBase.castShadow = true;
+    studBase.receiveShadow = true;
+    group.add(studBase);
 
   }
   else if(type === "door"){
@@ -239,7 +251,8 @@ updatePreview();
 
 function updatePreviewColor(valid){
   preview.traverse(o=>{
-    if(o.material) o.material.color.set(valid?currentColor:0xff0000);
+    if(o.material)
+        o.material.color.set(valid?currentColor:0xff0000);
   });
 }
 

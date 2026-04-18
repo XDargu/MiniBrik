@@ -30,6 +30,41 @@ function createFlatRingGeometry(outerRadius, innerRadius, height) {
   return geometry;
 }
 
+function createLEGODishGeometry({
+  radius = 1,
+  depth = 0.3,
+  segments = 48
+} = {}) {
+
+  const pts = [];
+  const bowlSteps = 12;
+
+  let lastY = 0;
+
+  for (let i = 0; i <= bowlSteps; i++) {
+    const t = i / bowlSteps;
+    const r = radius * t;
+
+    const y = -depth * Math.pow(t, 2.3) + 0.15;
+
+    lastY = y;
+    pts.push(new THREE.Vector2(r, y));
+  }
+
+  // Hard edge (duplicate point)
+  pts.push(new THREE.Vector2(radius, lastY));
+  pts.push(new THREE.Vector2(radius, lastY));
+
+  // rim drop
+  pts.push(new THREE.Vector2(radius, -depth));
+
+  const geo = new THREE.LatheGeometry(pts, segments);
+
+  geo.computeVertexNormals();
+
+  return geo;
+}
+
 function addBase() {
   const group = new THREE.Group();
   const mat = new THREE.MeshStandardMaterial({ color: 0x555555 });
