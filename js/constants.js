@@ -6,5 +6,5 @@ const studGeo=new THREE.CylinderGeometry(0.25, 0.25, studH, 16);
 const hollowStudGeo = createFlatRingGeometry(0.25, 0.15, studH);
 const dishGeo = createLEGODishGeometry();
 
-const gridSize = 20;
+const gridSize = 24;
 const GRID_HALF = gridSize / 2; // 10

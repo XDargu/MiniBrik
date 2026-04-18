@@ -12,7 +12,7 @@ function packBrick(b) {
 
   const x = (b.x + GRID_HALF) & 31;
   const z = (b.z + GRID_HALF) & 31;
-  const y = b.y & 31;
+  const y = b.y & 127;
 
   const r = b.r & 3;
 
@@ -22,7 +22,7 @@ function packBrick(b) {
     (x << 9) |
     (z << 14) |
     (y << 19) |
-    (r << 24)
+    (r << 26)
   ) >>> 0;
 }
 
@@ -34,8 +34,8 @@ function unpackBrick(v) {
     x: ((v >> 9) & 31) - GRID_HALF,
     z: ((v >> 14) & 31) - GRID_HALF,
 
-    y:  (v >> 19) & 31,
-    r:  (v >> 24) & 3
+    y:  (v >> 19) & 127,
+    r:  (v >> 26) & 3
   };
 }
 
