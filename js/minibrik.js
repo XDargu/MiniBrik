@@ -182,6 +182,11 @@ function createBrick(w,d,color,transparent=false,type="box",hollowStud=false){
 let preview;
 let previewState={x:0,z:0,y:0,valid:false};
 
+const sphere = new THREE.SphereGeometry( 0.3, 16, 16 );
+const material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
+const previewTarget = new THREE.Mesh( sphere, material );
+scene.add(previewTarget)
+
 function updatePreview(){
   if(preview) scene.remove(preview);
 
@@ -207,7 +212,7 @@ function snap(p){
 function updatePreviewPos()
 {
   raycaster.setFromCamera(mouse,camera);
-  const hits=raycaster.intersectObjects(colliders);
+  const hits = raycaster.intersectObjects(colliders);
 
   if(!hits.length) return;
 
@@ -218,8 +223,7 @@ function updatePreviewPos()
   const y=snap(p.y);
   const z=snap(p.z);
 
-  const occupancy = getOccupancy(x,y,z,w,d,rotation);
-  const res = computePlacement(x, y, z, w, d);
+  const res = computePlacement(x, y, z, w, d, rotation);
   const realPos = computeBrickPos(x,res.y,z,w,d,rotation);
 
   previewState={x: x, z: z, y:res.y,valid:res.valid };
@@ -229,6 +233,12 @@ function updatePreviewPos()
     realPos.y,
     realPos.z,
   );
+
+  previewTarget.position.set(
+    p.x,
+    p.y,
+    p.z,
+  )
   updatePreviewColor(res.valid);
 }
 

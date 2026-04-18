@@ -14,26 +14,33 @@ function getFootprint(brickId, rot) {
   return rot % 180 === 0 ? [b.w, b.d] : [b.d, b.w];
 }
 
-function computePlacement(x, y, z, w, d) {
-  let maxY = 0,
-    support = false;
+function computePlacement(x, y, z, w, d, rot) {
+  const cells = getOccupancy(x, y, z, w, d, rot);
 
-  for (let i = 0; i < w; i++)
-    for (let j = 0; j < d; j++) {
-      maxY = Math.max(maxY, columnHeight(x + i, y, z + j));
-    }
+  let maxY = 0;
+  let support = false;
 
-  for (let i = 0; i < w; i++)
-    for (let j = 0; j < d; j++) {
-      if (isOccupied(x + i, maxY, z + j)) return { valid: false, y: 0 };
-    }
+  // Find highest column among all cells
+  for (const c of cells) {
+    maxY = Math.max(maxY, columnHeight(c.x, y, c.z));
+  }
 
-  for (let i = 0; i < w; i++)
-    for (let j = 0; j < d; j++) {
-      if (isOccupied(x + i, maxY - 1, z + j)) support = true;
+  // Check collision at that height
+  for (const c of cells) {
+    if (isOccupied(c.x, maxY, c.z)) {
+      return { valid: false, y: 0 };
     }
+  }
+
+  // Check support
+  for (const c of cells) {
+    if (isOccupied(c.x, maxY - 1, c.z)) {
+      support = true;
+    }
+  }
 
   if (maxY === 0) support = true;
+
   return { valid: support, y: maxY };
 }
 

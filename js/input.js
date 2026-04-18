@@ -1,6 +1,9 @@
 window.addEventListener("mousemove", (e) => {
-  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(e.clientY / (window.innerHeight + 58)) * 2 + 1;
+
+  const rect = renderer.domElement.getBoundingClientRect();
+
+  mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
   updatePreviewPos();
 });
@@ -48,6 +51,7 @@ const colorButtonsDiv = document.getElementById("colorButtons");
 COLORS.forEach((color) => {
   const btn = document.createElement("button");
   btn.style.background = `#${color.toString(16).padStart(6, "0")}`;
+  btn.dataset.color = color;
   btn.onclick = () => {
     currentColor = color;
     updatePreview();
@@ -64,8 +68,8 @@ function updateActive() {
     ),
   );
   [...colorButtonsDiv.children].forEach((btn) => {
-    const c = parseInt(btn.style.background.slice(1), 16);
-    btn.classList.toggle("active", c === currentColor);
+    const c = btn.dataset.color;
+    btn.classList.toggle("active", c == currentColor);
   });
 }
 updateActive();
