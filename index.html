@@ -543,6 +543,10 @@ function undo(){
   scene.remove(h.group);
   redoStack.push(h);
 
+  // Remove collider
+  const colIdx = colliders.indexOf(h.collider);
+  colliders.splice(colIdx, 1);
+
   rebuild();
   updateShareURL();
 }
@@ -553,6 +557,7 @@ function redo(){
 
   scene.add(h.group);
   blockHistory.push(h);
+  colliders.push(h.collider);
   const blockPos = computeBrickPos(h.x, h.y, h.z, h.w, h.d, h.r);
   occupy(blockPos.x,h.y,blockPos.z,h.w,h.d);
   updateShareURL();
@@ -882,7 +887,8 @@ function placeBlock(brickId, x, y, z, rot, color)
         w: w,
         d: d,
         r: rot,
-        group: group
+        group: group,
+        collider: obj.body,
     };
     pushHistory(h);
 
