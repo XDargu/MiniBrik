@@ -25,7 +25,8 @@ const mouse = new THREE.Vector2();
 const materialsByColor = new Map(COLORS.map((color) => {
     return [color, new THREE.MeshStandardMaterial({
         color, 
-        roughness: 0.8
+        roughness: 0.8,
+        emissive: (color == 0xffc94a || color == 0xe74c3d) ? new THREE.Color(color): null
     })];
 }));
 
@@ -242,6 +243,17 @@ function createBrick(w,d,h,rot,color,type="box",hollowStud=false){
   {
     group.rotation.x = Math.PI;
   }*/
+
+  if (color == 0xffc94a || color == 0xe74c3d)
+  {
+    const light = new THREE.PointLight( color, color == 0xe74c3d ? 25 : 50, 10 );
+    //light.castShadow = true;
+    light.shadow.bias = -0.000038;
+    light.shadow.normalBias = 0.00005;
+    light.shadow.mapSize.height = 256;
+    light.shadow.mapSize.width = 256;
+    group.add( light );
+  }
 
   return {group,body};
 }

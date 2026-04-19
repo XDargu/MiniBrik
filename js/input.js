@@ -73,6 +73,10 @@ function initUI() {
   COLORS.forEach((color) => {
     const btn = document.createElement("button");
     btn.style.background = `#${color.toString(16).padStart(6, "0")}`;
+    if (color == 0xffc94a || color == 0xe74c3d)
+    {
+        btn.style.boxShadow = `0px 0px 10px 3px #${color.toString(16).padStart(6, "0")}`;
+    }
     btn.dataset.color = color;
     btn.onclick = () => {
       currentColor = color;

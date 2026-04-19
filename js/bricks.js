@@ -50,7 +50,9 @@ const COLORS = [
   0x6b8ba4, // Sand Blue
   0x607848, // Olive Green
   0x3a3a3a, // Black
-  0xffc94a  // Bright Light Orange
+
+  0xffc94a, // Bright Light Orange
+  0xe74c3d, // soft red
 ];
 
 function colorToIndex(hex) {
