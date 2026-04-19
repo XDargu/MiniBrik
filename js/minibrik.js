@@ -316,7 +316,7 @@ function updatePreviewPos()
   const [w,d]=getFootprint(currentBrick, rotation);
 
   const x=snap(p.x);
-  const y=snap(p.y);
+  const y=snap(p.y * 3);
   const z=snap(p.z);
 
   const def = BRICKS[currentBrick];
