@@ -13,6 +13,7 @@ document.body.appendChild(renderer.domElement);
 
 let scene = buildEmptyScene();
 let camera = setupCamera();
+let audio = setupAudio(camera);
 
 let base = addBase();
 scene.add(base);

@@ -16,6 +16,7 @@ window.addEventListener("click", (e) => {
   if (!valid) return;
 
   placeBlock(currentBrick, x, y, z, rotation, currentColor);
+  playFromPool(soundPools.place)
 
   updateShareURL();
   updatePreview();
@@ -28,8 +29,17 @@ window.addEventListener("keydown", (e) => {
     updatePreview();
     updatePreviewPos();
   }
-  if (e.key.toLowerCase() === "z") undo();
-  if (e.key.toLowerCase() === "y") redo();
+  if (e.key.toLowerCase() === "z")
+  {
+    if (undo())
+        playFromPool(soundPools.remove)
+  }
+  if (e.key.toLowerCase() === "y")
+  {
+    if (redo())
+        playFromPool(soundPools.place)
+  }
+        
 });
 
 // UI

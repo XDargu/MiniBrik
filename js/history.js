@@ -10,7 +10,7 @@ function pushHistory(entry){
 
 function undo(){
   const h = blockHistory.pop();
-  if(!h) return;
+  if(!h) return false;
 
   scene.remove(h.group);
   redoStack.push(h);
@@ -21,11 +21,12 @@ function undo(){
 
   rebuild();
   updateShareURL();
+  return true;
 }
 
 function redo(){
   const h = redoStack.pop();
-  if(!h) return;
+  if(!h) return false;
 
   scene.add(h.group);
   blockHistory.push(h);
@@ -34,6 +35,7 @@ function redo(){
   const def = BRICKS[h.id];
   occupy(blockPos.x,h.y,blockPos.z,h.w,h.d,def.h);
   updateShareURL();
+  return true;
 }
 
 function rebuild(){
