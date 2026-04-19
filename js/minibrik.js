@@ -9,6 +9,7 @@ let rotation = 0;
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true
+renderer.debug.checkShaderErrors = false;
 document.body.appendChild(renderer.domElement);
 
 let scene = new THREE.Scene();
@@ -28,7 +29,8 @@ const materialsByColor = new Map(COLORS.map((color) => {
     return [color, new THREE.MeshStandardMaterial({
         color, 
         roughness: 0.8,
-        emissive: (color == 0xffc94a || color == 0xe74c3d) ? new THREE.Color(color): null
+        emissive: (color == 0xffc94a || color == 0xe74c3d) ? new THREE.Color(color): null,
+        emissiveIntensity: color == 0xffc94a ? 3 : 2,
     })];
 }));
 
