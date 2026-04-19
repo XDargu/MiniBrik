@@ -66,6 +66,11 @@ function initLoad() {
   if (!hash) return;
 
   const state = decodeState(hash);
+  loadState(state);
+}
+
+function loadState(state)
+{
   if (state.settings)
   {
     globalSettings = state.settings;
