@@ -171,6 +171,23 @@ function createBrick(w,d,h,rot,color,type="box",hollowStud=false){
     studBase.receiveShadow = true;
     group.add(studBase);
   }
+  else if(type === "arch"){
+      const center = hNorm*0.5;
+      const diff = center - 0.5;
+      
+      body=new THREE.Mesh(createLegoArchGeometry({ width: d, height: hNorm, holeWidth: d - 2 }), mat);
+      body.position.y = -0.5;
+
+    for(let i=0;i<w;i++) {
+      for(let j=0;j<d;j++) {
+        const stud = new THREE.Mesh(studGeoToUse,mat);
+        stud.position.set(i-w/2+0.5, hNorm - 0.4, j-d/2+0.5);
+        stud.castShadow = true;
+        stud.receiveShadow = true;
+        group.add(stud);
+      }
+    }
+  }
   else if(type === "door"){
     const frame = new THREE.Mesh(
       new THREE.BoxGeometry(w,1.8,d),

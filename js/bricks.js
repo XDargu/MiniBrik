@@ -27,6 +27,9 @@ const BRICKS = {
   17:{ name: "1x4 Bar", w:1, d:1, h: 4*brickH,  type:"bar" },
 
   18:{ name: "Dish", w:1, d:1, h:2,  type:"dish", hollowStud: true },
+
+  19:{ name: "1x3 Arch", w:1, d:3, h:brickH,  type:"arch" },
+  20:{ name: "1x5 Arch", w:1, d:5, h:brickH * 3,  type:"arch" },
 };
 
 const COLORS = [

@@ -30,6 +30,69 @@ function createFlatRingGeometry(outerRadius, innerRadius, height) {
   return geometry;
 }
 
+function createLegoArchGeometry({
+  width = 3,
+  height = 1,
+  depth = 1,
+  holeWidth = 1,
+} = {}) {
+
+  const outerWidth = width;
+  const outerHeight = height;
+
+  const shape = new THREE.Shape();
+
+  const holeCenterX = outerWidth / 2;
+  const half = holeWidth / 2;
+
+  const archHeight = 0.4 * height;
+
+  const centerX = holeCenterX;
+
+  shape.moveTo(0, outerHeight);
+  shape.lineTo(0, 0);
+
+  shape.lineTo(centerX - half, 0);
+
+  // left pillar up
+  shape.moveTo(centerX - half, 0);
+  shape.lineTo(centerX - half, archHeight);
+
+  // arc across top
+  const segments = 8;
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const angle = Math.PI * (1 - t);
+  
+    const x = centerX + Math.cos(angle) * half;
+    const y = archHeight + Math.sin(angle) * (height/2 - 0.2); 
+  
+    if (i === 0)
+        shape.lineTo(x, y);
+    else
+        shape.lineTo(x, y);
+  }
+
+  // right pillar down
+  shape.lineTo(centerX + half, archHeight);
+  shape.lineTo(centerX + half, 0);
+
+  shape.lineTo(outerWidth, 0);
+  shape.lineTo(outerWidth, outerHeight);
+  
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    depth: depth,
+    bevelEnabled: false,
+    steps: 1,
+  });
+
+  
+  geometry.translate(-outerWidth / 2, 0, -depth / 2);
+  geometry.rotateY(-Math.PI / 2);
+
+  return geometry;
+}
+
 function createLEGODishGeometry({
   radius = 1,
   depth = 0.3,
