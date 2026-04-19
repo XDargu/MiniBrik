@@ -75,7 +75,7 @@ function createBrick(w,d,h,rot,color,type="box",hollowStud=false){
     if (is1x1)
         body = new THREE.Mesh(new THREE.CylinderGeometry(rad - gap, rad - gap, 0.8, 16),mat);
     else
-        body = new THREE.Mesh(new THREE.CylinderGeometry(rad - gap, rad - gap, 1, 16),mat);
+        body = new THREE.Mesh(new THREE.CylinderGeometry(rad - gap, rad - gap, 1-gap, 16),mat);
 
     for(let i=0;i<w;i++)
     {
