@@ -56,7 +56,7 @@ function clearHistory()
 
 // Load and Store History
 function updateShareURL() {
-  const encoded = encodeState(blockHistory);
+  const encoded = encodeState(globalSettings, blockHistory);
   const url = `${location.origin}${location.pathname}#${encoded}`;
   history.replaceState(null, "", url);
 }
@@ -66,7 +66,11 @@ function initLoad() {
   if (!hash) return;
 
   const state = decodeState(hash);
-  loadFromHistory(state);
+  if (state.settings)
+  {
+    globalSettings = state.settings;
+  }
+  loadFromHistory(state.bricks);
 }
 
 

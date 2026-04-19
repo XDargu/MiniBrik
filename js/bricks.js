@@ -1,3 +1,10 @@
+const defaultGlobalSettings = {
+    lightPreset: 0,
+    colorPalette: 0
+}
+
+let globalSettings = structuredClone(defaultGlobalSettings);
+
 const brickH = 3;
 
 const BRICKS = {

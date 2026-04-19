@@ -1,9 +1,27 @@
-function encodeCoord(v) {
-  return v + GRID_HALF;
+const versionMagic = 0x55;
+
+function encodeGlobalSettings({
+  lightPreset = 0,
+  colorPalette = 0
+} = {}) {
+  return (
+    (versionMagic) |
+    ((lightPreset & 7) << 8) |
+    ((colorPalette & 15) << 11)
+  ) >>> 0;
 }
 
-function decodeCoord(v) {
-  return v - GRID_HALF;
+function decodeGlobalSettings(v) {
+  const magic = v & 0xFF;
+
+  if (magic !== versionMagic) {
+    return null; // This is a save from before we had global settings
+  }
+
+  return {
+    lightPreset: (v >> 8) & 7,
+    colorPalette: (v >> 11) & 15
+  };
 }
 
 function packBrick(b) {
@@ -39,17 +57,22 @@ function unpackBrick(v) {
   };
 }
 
-function encodeState(blockHistory) {
-  const arr = blockHistory.map(h =>
-    packBrick({
-      id: h.id,
-      c: colorToIndex(h.c),
-      x: h.x,
-      y: h.y,
-      z: h.z,
-      r: (h.r / 90) & 3
-    })
-  );
+function encodeState(globalSettings, blockHistory) {
+  const header = encodeGlobalSettings(globalSettings);
+
+  const arr = [
+    globalSettings,
+    ...blockHistory.map(h =>
+        packBrick({
+          id: h.id,
+          c: colorToIndex(h.c),
+          x: h.x,
+          y: h.y,
+          z: h.z,
+          r: (h.r / 90) & 3
+        })
+      )
+    ]
 
   const buffer = new Uint32Array(arr);
 
@@ -87,7 +110,11 @@ function base64urlDecode(str) {
 function decodeState(str) {
   const arr = base64urlDecode(str);
 
-  return Array.from(arr).map(v => {
+  if (arr.length === 0) return { settings: null, bricks: [] };
+
+  const settings = decodeGlobalSettings(arr[0]) || defaultGlobalSettings;
+
+  const bricks = Array.from(arr.slice(1)).map(v => {
     const b = unpackBrick(v);
     const def = BRICKS[b.id];
 
@@ -103,4 +130,6 @@ function decodeState(str) {
       group: null
     };
   });
+
+  return { settings, bricks };
 }
