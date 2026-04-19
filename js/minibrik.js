@@ -392,7 +392,16 @@ function placeBlock(brickId, x, y, z, rot, color)
     return h;
 }
 
+let lastTime = performance.now();
+
 function renderScene(){
+
+  const now = performance.now();
+  const delta = (now - lastTime) / 1000;
+  lastTime = now;
+
+  updateStrafe(camera, delta);
+
   requestAnimationFrame(renderScene);
   renderer.render(scene,camera);
 }

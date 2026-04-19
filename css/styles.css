@@ -7,7 +7,7 @@ body {
 
 #ui {
   position: absolute;
-  top: 58px;
+  bottom: 10px;
   left: 10px;
   background: rgba(0, 0, 0, 0.6);
   padding: 12px;
