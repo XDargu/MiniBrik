@@ -8,7 +8,7 @@ const thumbnailSize = 64;
 thumbnailRenderer.setSize(thumbnailSize, thumbnailSize);
 
 let previewItem = null;
-const thumbnailScene = buildEmptyScene();
+const thumbnailScene = buildEmptyScene(LIGHT_PRESETS[0]);
 
 const thumbDist = 2;
 const thumbRatio = thumbnailSize / thumbnailSize;

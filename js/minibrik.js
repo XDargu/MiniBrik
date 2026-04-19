@@ -11,7 +11,9 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true
 document.body.appendChild(renderer.domElement);
 
-let scene = buildEmptyScene();
+let scene = new THREE.Scene();
+initLighting(scene);
+transitionToPreset(scene, renderer, LIGHT_PRESETS[globalSettings.lightPreset], 0.01);
 let camera = setupCamera();
 let audio = setupAudio(camera);
 
@@ -401,6 +403,7 @@ function renderScene(){
   lastTime = now;
 
   updateStrafe(camera, delta);
+  updateLightingTransition(scene, renderer, delta);
 
   requestAnimationFrame(renderScene);
   renderer.render(scene,camera);

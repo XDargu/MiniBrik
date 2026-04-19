@@ -6,8 +6,8 @@ function encodeGlobalSettings({
 } = {}) {
   return (
     (versionMagic) |
-    ((lightPreset & 7) << 8) |
-    ((colorPalette & 15) << 11)
+    ((lightPreset & 15) << 8) |
+    ((colorPalette & 15) << 12)
   ) >>> 0;
 }
 
@@ -19,8 +19,8 @@ function decodeGlobalSettings(v) {
   }
 
   return {
-    lightPreset: (v >> 8) & 7,
-    colorPalette: (v >> 11) & 15
+    lightPreset: (v >> 8) & 15,
+    colorPalette: (v >> 12) & 15
   };
 }
 
@@ -61,7 +61,7 @@ function encodeState(globalSettings, blockHistory) {
   const header = encodeGlobalSettings(globalSettings);
 
   const arr = [
-    globalSettings,
+    header,
     ...blockHistory.map(h =>
         packBrick({
           id: h.id,

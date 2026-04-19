@@ -45,6 +45,7 @@ window.addEventListener("keydown", (e) => {
 // UI
 function initUI() {
   const brickButtonsDiv = document.getElementById("brickButtons");
+  const presetButtonsDiv = document.getElementById("presetButtons");
 
   Object.keys(BRICKS).forEach((id) => {
     const def = BRICKS[id];
@@ -87,6 +88,24 @@ function initUI() {
     colorButtonsDiv.appendChild(btn);
   });
 
+  Object.keys(LIGHT_PRESETS).forEach((key) => {
+    const preset = LIGHT_PRESETS[key];
+
+    const btn = document.createElement("button");
+    btn.textContent = preset.name;
+    btn.dataset.preset = key;
+
+    btn.onclick = () => {
+      globalSettings.lightPreset = key;
+
+      transitionToPreset(scene, renderer, preset);
+      updateActive();
+      updateShareURL();
+    };
+
+    presetButtonsDiv.appendChild(btn);
+  });
+
   function updateActive() {
     [...brickButtonsDiv.children].forEach((btn) =>
       btn.classList.toggle(
@@ -97,6 +116,12 @@ function initUI() {
     [...colorButtonsDiv.children].forEach((btn) => {
       const c = btn.dataset.color;
       btn.classList.toggle("active", c == currentColor);
+    });
+    [...presetButtonsDiv.children].forEach((btn) => {
+      btn.classList.toggle(
+        "active",
+        btn.dataset.preset == globalSettings.lightPreset
+      );
     });
   }
 

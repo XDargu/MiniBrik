@@ -69,6 +69,7 @@ function initLoad() {
   if (state.settings)
   {
     globalSettings = state.settings;
+    transitionToPreset(scene, renderer, LIGHT_PRESETS[globalSettings.lightPreset], 0.1);
   }
   loadFromHistory(state.bricks);
 }
