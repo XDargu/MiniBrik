@@ -63,3 +63,11 @@ button {
   color: #ffffff;
   font-family: sans-serif;
 }
+
+#presetButtons {
+    margin-top:8px;
+}
+
+#presetButtons button {
+    padding: 4px 8px;
+}
