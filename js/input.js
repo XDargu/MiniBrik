@@ -12,6 +12,7 @@ window.addEventListener("click", (e) => {
 
   if (e.target.closest("#ui")) return;
   if (e.target.closest("#topbar")) return;
+  if (e.target.closest("#controls")) return;
 
   const { x, z, y, valid } = previewState;
   if (!valid) return;
@@ -174,6 +175,33 @@ function initUI() {
   
     const state = decodeState(build.data);
     loadState(state);
+  });
+
+  const clearBtn = document.getElementById("clearBuild");
+
+  clearBtn.addEventListener("click", () => {
+    if (confirm("Are you sure you want to clear the build?"))
+    {
+        loadState({ settings: defaultGlobalSettings, bricks: [] });
+        updateShareURL();
+    }
+  });
+
+  // Audio toggle
+  let audioEnabled = true;
+
+  const audioBtn = document.getElementById("audioToggle");
+  
+  audioBtn.addEventListener("click", async () => {
+    audioEnabled = !audioEnabled;
+  
+    if (audioEnabled) {
+      await THREE.AudioContext.getContext().resume?.();
+      audioBtn.textContent = "Sound: on";
+    } else {
+      await THREE.AudioContext.getContext().suspend?.();
+      audioBtn.textContent = "Sound: off";
+    }
   });
   
   updateActive();
