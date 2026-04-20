@@ -175,6 +175,7 @@ function initUI() {
   
     const state = decodeState(build.data);
     loadState(state);
+    updateActive();
   });
 
   const clearBtn = document.getElementById("clearBuild");
