@@ -146,16 +146,24 @@ function initUI() {
     });
   }
 
+  let thumbnailCache = new Map();
+
   function updateThumbnailsColor()
   {
     [...brickButtonsDiv.children].forEach((btn) =>
     {
       const def = BRICKS[btn.dataset.brickId];
-      const img = btn.querySelector("img")
-      img.src = renderBrickPreview(
-        () =>
-          createBrick(def.w, def.d, def.h, 0, currentColor, def.type, def.hollowStud).group,
-      );
+      const img = btn.querySelector("img");
+      const thumbnailKey = `${btn.dataset.brickId}-${currentColor}`;
+
+      let thumbnailUrl = thumbnailCache.get(thumbnailKey);
+      if (!thumbnailUrl)
+      {
+        thumbnailUrl = renderBrickPreview(() => createBrick(def.w, def.d, def.h, 0, currentColor, def.type, def.hollowStud).group );
+        thumbnailCache.set(thumbnailKey, thumbnailUrl);
+      }
+      thumbnailCache.get()
+      img.src = thumbnailUrl;
 
     });
   }
