@@ -274,8 +274,10 @@ const previewTarget = new THREE.Mesh( sphere, material );
 scene.add(previewTarget)
 
 function updatePreview(){
+  let prevPos = null;
   if(preview)
   {
+    prevPos = preview.position.clone();
     disposePreviewMaterial();
     scene.remove(preview);
   }
@@ -285,6 +287,7 @@ function updatePreview(){
   
   preview = obj.group;
   preview.rotation.y = rotation*Math.PI/180;
+  preview.position.set(prevPos?.x || -1000, prevPos?.y || -1000, prevPos?.z || -1000);
 
   scene.add(preview);
 
@@ -326,6 +329,10 @@ function updatePreviewPos()
 {
   raycaster.setFromCamera(mouse,camera);
   const hits = raycaster.intersectObjects(colliders);
+  
+  previewState={x: -1000, z: -1000, y:-1000,valid:false };
+  preview.position.set(-1000,-1000,-1000);
+  previewTarget.position.set(-1000,-1000,-1000);
 
   if(!hits.length) return;
 
