@@ -124,7 +124,7 @@ function setupCamera()
         prevX = e.clientX;
         prevY = e.clientY;
 
-        theta -= dx * 0.005;
+        theta += dx * 0.005;
         phi -= dy * 0.005;
 
         phi = Math.max(0.1, Math.min(Math.PI - 0.1, phi));
