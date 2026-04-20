@@ -79,16 +79,16 @@ function createBrick(w,d,h,rot,color,type="box",hollowStud=false){
     const rad = w == 1 ? 0.45 : w/2;
 
     if (is1x1)
-        body = new THREE.Mesh(new THREE.CylinderGeometry(rad - gap, rad - gap, 0.8, 16),mat);
+        body = new THREE.Mesh(new THREE.CylinderGeometry(rad - gap, rad - gap, hNorm-gap-0.2, 16),mat);
     else
-        body = new THREE.Mesh(new THREE.CylinderGeometry(rad - gap, rad - gap, 1-gap, 16),mat);
+        body = new THREE.Mesh(new THREE.CylinderGeometry(rad - gap, rad - gap, hNorm-gap, 16),mat);
 
     for(let i=0;i<w;i++)
     {
       for(let j=0;j<d;j++)
       {
         const stud=new THREE.Mesh(studGeoToUse,mat);
-        stud.position.set(i-w/2+0.5,0.6,j-d/2+0.5);
+        stud.position.set(i-w/2+0.5,hNorm-0.4-gap,j-d/2+0.5);
         stud.castShadow = true;
         stud.receiveShadow = true;
         group.add(stud);
@@ -97,7 +97,8 @@ function createBrick(w,d,h,rot,color,type="box",hollowStud=false){
 
     if (is1x1)
     {
-        body.position.y += 0.1;
+        const h = hNorm-gap-0.2;
+        body.position.y += h*0.5 - 0.3;
 
         const studBase = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.2, 16), mat);
         studBase.position.set(0, -0.4, 0);

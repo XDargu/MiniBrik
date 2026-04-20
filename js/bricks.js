@@ -8,40 +8,41 @@ let globalSettings = structuredClone(defaultGlobalSettings);
 const brickH = 3;
 
 const BRICKS = {
-  0: { name: "2x2", w:2, d:2, h: brickH, type:"box" },
-  1: { name: "2x3", w:2, d:3, h: brickH, type:"box" },
-  2: { name: "2x4", w:2, d:4, h: brickH, type:"box" },
+  0: { sort: 0, name: "2x2", w:2, d:2, h: brickH, type:"box" },
+  1: { sort: 1, name: "2x3", w:2, d:3, h: brickH, type:"box" },
+  2: { sort: 2, name: "2x4", w:2, d:4, h: brickH, type:"box" },
 
-  3: { name: "1x1", w:1, d:1, h: brickH, type:"box" },
-  4: { name: "1x2", w:1, d:2, h: brickH, type:"box" },
-  5: { name: "1x3", w:1, d:3, h: brickH, type:"box" },
-  6: { name: "1x4", w:1, d:4, h: brickH, type:"box" },
-  7: { name: "1x8", w:1, d:8, h: brickH, type:"box" },
+  3: { sort: 3, name: "1x1", w:1, d:1, h: brickH, type:"box" },
+  4: { sort: 4, name: "1x2", w:1, d:2, h: brickH, type:"box" },
+  5: { sort: 5, name: "1x3", w:1, d:3, h: brickH, type:"box" },
+  6: { sort: 6, name: "1x4", w:1, d:4, h: brickH, type:"box" },
+  7: { sort: 7, name: "1x8", w:1, d:8, h: brickH, type:"box" },
 
-  8: { name: "1x1 Flat", w:1, d:1, h: 1, type:"box" },
-  9: { name: "1x2 Flat", w:1, d:2, h: 1, type:"box" },
+  8: { sort: 8, name: "1x1 Flat", w:1, d:1, h: 1, type:"box" },
+  9: { sort: 9, name: "1x2 Flat", w:1, d:2, h: 1, type:"box" },
 
-  10: { name: "2x3 Flat", w:2, d:3, h: 1, type:"box" },
-  11: { name: "2x4 Flat", w:2, d:4, h: 1, type:"box" },
+  10: { sort: 10, name: "2x3 Flat", w:2, d:3, h: 1, type:"box" },
+  11: { sort: 11, name: "2x4 Flat", w:2, d:4, h: 1, type:"box" },
 
-  12: { name: "1x2 Tile", w:1, d:2, h: 1, type:"tile" },
-  13: { name: "1x1 Tile", w:1, d:1, h: 1, type:"tile" },
+  12: { sort: 12, name: "1x2 Tile", w:1, d:2, h: 1, type:"tile" },
+  13: { sort: 13, name: "1x1 Tile", w:1, d:1, h: 1, type:"tile" },
 
-  14: { name: "2x2 Round", w:2, d:2, h: brickH, type:"cylinder" },
-  15: { name: "1x1 Round", w:1, d:1, h: brickH, type:"cylinder", hollowStud: true },
+  14: { sort: 14, name: "2x2 Round", w:2, d:2, h: brickH, type:"cylinder" },
+  15: { sort: 15, name: "1x1 Round", w:1, d:1, h: brickH, type:"cylinder", hollowStud: true },
+  25: { sort: 16, name: "1x1 stud", w:1, d:1, h: 1, type:"cylinder" },
   
-  16:{ name: "1x1 Cone", w:1, d:1, h: brickH, type:"cone", hollowStud: true },
-  17:{ name: "1x4 Bar", w:1, d:1, h: 4*brickH,  type:"bar" },
+  16:{ sort: 17, name: "1x1 Cone", w:1, d:1, h: brickH, type:"cone", hollowStud: true },
+  17:{ sort: 18, name: "1x4 Bar", w:1, d:1, h: 4*brickH,  type:"bar" },
 
-  18:{ name: "Dish", w:1, d:1, h:2,  type:"dish", hollowStud: true },
+  18:{ sort: 19, name: "Dish", w:1, d:1, h:2,  type:"dish", hollowStud: true },
 
-  19:{ name: "1x3 Arch", w:1, d:3, h:brickH,  type:"arch" },
-  20:{ name: "1x5 Arch", w:1, d:5, h:brickH * 3,  type:"arch" },
+  19:{ sort: 20, name: "1x3 Arch", w:1, d:3, h:brickH,  type:"arch" },
+  20:{ sort: 21, name: "1x5 Arch", w:1, d:5, h:brickH * 3,  type:"arch" },
 
-  19:{ name: "1x2 Slope", w:1, d:2  , h:brickH,  type:"slope" },
-  20:{ name: "2x2 Slope", w:2, d:2  , h:brickH,  type:"slope" },
-  21:{ name: "1x3 Slope", w:1, d:3  , h:brickH,  type:"slope" },
-  22:{ name: "1x2x2 Slope", w:1, d:2  , h:brickH*2,  type:"slope" },
+  21:{ sort: 22, name: "1x2 Slope", w:1, d:2  , h:brickH,  type:"slope" },
+  22:{ sort: 23, name: "2x2 Slope", w:2, d:2  , h:brickH,  type:"slope" },
+  23:{ sort: 24, name: "1x3 Slope", w:1, d:3  , h:brickH,  type:"slope" },
+  24:{ sort: 25, name: "1x2x2 Slope", w:1, d:2  , h:brickH*2,  type:"slope" },
 };
 
 const COLORS = [
