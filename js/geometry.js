@@ -93,6 +93,33 @@ function createLegoArchGeometry({
   return geometry;
 }
 
+function createLegoSlopeGeometry({
+  width = 3,
+  height = 1,
+  depth = 1,
+} = {}) {
+
+  const shape = new THREE.Shape();
+
+  shape.moveTo(0, height);
+  shape.lineTo(0, 0);
+  shape.lineTo(width, 0);
+  shape.lineTo(width, 1/6);
+  shape.lineTo(1, height);
+  shape.lineTo(0, height);
+
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    depth: depth,
+    bevelEnabled: false,
+    steps: 1,
+  });
+  
+  geometry.translate(-width / 2, 0, -depth / 2);
+  geometry.rotateY(-Math.PI / 2);
+
+  return geometry;
+}
+
 function createLEGODishGeometry({
   radius = 1,
   depth = 0.3,

@@ -37,6 +37,11 @@ const BRICKS = {
 
   19:{ name: "1x3 Arch", w:1, d:3, h:brickH,  type:"arch" },
   20:{ name: "1x5 Arch", w:1, d:5, h:brickH * 3,  type:"arch" },
+
+  19:{ name: "1x2 Slope", w:1, d:2  , h:brickH,  type:"slope" },
+  20:{ name: "2x2 Slope", w:2, d:2  , h:brickH,  type:"slope" },
+  21:{ name: "1x3 Slope", w:1, d:3  , h:brickH,  type:"slope" },
+  22:{ name: "1x2x2 Slope", w:1, d:2  , h:brickH*2,  type:"slope" },
 };
 
 const COLORS = [

@@ -106,20 +106,6 @@ function createBrick(w,d,h,rot,color,type="box",hollowStud=false){
         group.add(studBase);
     }
   }
-  else if(type === "slope"){
-    body=new THREE.Mesh(new THREE.BoxGeometry(w,1,d),mat);
-    body.rotation.x = -0.5;
-    body.position.y = 0.5;
-  }
-  else if(type === "slope_3040"){
-    const geo = new THREE.BoxGeometry(w,1,d,1,1,1);
-    geo.translate(0,0.5,0);
-    geo.vertices?.forEach?.(() => {}); // placeholder (ignored in r160)
-
-    body = new THREE.Mesh(geo, mat);
-    body.rotation.x = -Math.PI / 4;
-    body.position.y = 0.5;
-  }
   else if(type === "bar"){
     body = new THREE.Mesh(
       new THREE.CylinderGeometry(0.2, 0.2, hNorm, 20),
@@ -182,11 +168,28 @@ function createBrick(w,d,h,rot,color,type="box",hollowStud=false){
       const center = hNorm*0.5;
       const diff = center - 0.5;
       
-      body=new THREE.Mesh(createLegoArchGeometry({ width: d, height: hNorm, holeWidth: d - 2 }), mat);
+      body=new THREE.Mesh(createLegoArchGeometry({ width: d-gap, height: hNorm-gap, holeWidth: d - 2 }), mat);
       body.position.y = -0.5;
 
     for(let i=0;i<w;i++) {
       for(let j=0;j<d;j++) {
+        const stud = new THREE.Mesh(studGeoToUse,mat);
+        stud.position.set(i-w/2+0.5, hNorm - 0.4, j-d/2+0.5);
+        stud.castShadow = true;
+        stud.receiveShadow = true;
+        group.add(stud);
+      }
+    }
+  }
+  else if(type === "slope"){
+      const center = hNorm*0.5;
+      const diff = center - 0.5;
+      
+      body=new THREE.Mesh(createLegoSlopeGeometry({ width: d-gap, height: hNorm-gap, depth: w-gap }), mat);
+      body.position.y = -0.5;
+
+    for(let i=0;i<w;i++) {
+      for(let j=0;j<1;j++) {
         const stud = new THREE.Mesh(studGeoToUse,mat);
         stud.position.set(i-w/2+0.5, hNorm - 0.4, j-d/2+0.5);
         stud.castShadow = true;
@@ -349,8 +352,6 @@ function updatePreviewPos()
 
   const rotatedOffsetX = -Math.cos(rotation * Math.PI / 180) * offsetX  + Math.sin(rotation * Math.PI / 180) * offsetZ;
   const rotatedOffsetZ = -Math.cos(rotation * Math.PI / 180) * offsetZ  - Math.sin(rotation * Math.PI / 180) * offsetX;
-
-  console.log(Math.sin(rotation * Math.PI / 180))
 
   const x=snap(p.x + rotatedOffsetX);
   const y=snap(p.y * 3);

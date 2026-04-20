@@ -25,34 +25,47 @@ window.addEventListener("click", (e) => {
   updatePreviewPos();
 });
 
-window.addEventListener("keydown", (e) => {
-  if (e.key.toLowerCase() === "r") {
-    rotation = (rotation + 90) % 360;
-    updatePreview();
-    updatePreviewPos();
-  }
-  if (e.key.toLowerCase() === "e") {
-    blockOffset = blockOffset + 1;
-    updatePreview();
-    updatePreviewPos();
-  }
-  if (e.key.toLowerCase() === "z")
-  {
-    if (undo())
-        playFromPool(soundPools.remove)
-  }
-  if (e.key.toLowerCase() === "y")
-  {
-    if (redo())
-        playFromPool(soundPools.place)
-  }
-        
-});
-
 // UI
 function initUI() {
+
+  window.addEventListener("keydown", (e) => {
+   if (e.key.toLowerCase() === "r") {
+     rotation = (rotation + 90) % 360;
+     updatePreview();
+     updatePreviewPos();
+   }
+   if (e.key.toLowerCase() === "c") {
+     const currentIdx = COLORS.indexOf(currentColor);
+     currentColor = COLORS[(currentIdx + 1) % COLORS.length];
+     updatePreview();
+     updateActive();
+     updateThumbnailsColor();
+   }
+   if (e.key.toLowerCase() === "e") {
+     blockOffset = blockOffset + 1;
+     updatePreview();
+     updatePreviewPos();
+   }
+   if (e.key.toLowerCase() === "z")
+   {
+     if (undo())
+         playFromPool(soundPools.remove)
+   }
+   if (e.key.toLowerCase() === "y")
+   {
+     if (redo())
+         playFromPool(soundPools.place)
+   }
+  });
+
   const brickButtonsDiv = document.getElementById("brickButtons");
   const presetButtonsDiv = document.getElementById("presetButtons");
+
+  brickButtonsDiv.addEventListener('wheel', (e) => {
+    e.preventDefault(); // stop page vertical scroll
+    brickButtonsDiv.scrollLeft += e.deltaY; // vertical wheel → horizontal movement
+    }, { passive: false }
+  );
 
   Object.keys(BRICKS).forEach((id) => {
     const def = BRICKS[id];

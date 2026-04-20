@@ -101,6 +101,9 @@ function setupCamera()
 
     // zoom (orthographic)
     window.addEventListener("wheel", (e) => {
+
+        if (e.target.closest("#brickButtons")) return;
+
         const factor = e.deltaY < 0 ? 1.1 : 0.9;
         camera.zoom *= factor;
         camera.zoom = Math.max(0.5, Math.min(5, camera.zoom));

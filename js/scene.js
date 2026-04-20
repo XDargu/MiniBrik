@@ -5,7 +5,7 @@ const intensity = 2;
 function buildEmptyScene(preset)
 {
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(preset.background);
+    //scene.background = new THREE.Color(preset.background);
 
     const light = new THREE.HemisphereLight(preset.hemi.sky, preset.hemi.ground, preset.hemi.intensity);
     scene.add(light);
