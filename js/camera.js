@@ -73,6 +73,15 @@ function clampTarget(camera) {
     camera.position.add(correction);
 }
 
+function updateOrbit(camera) {
+    camera.position.x = radius * Math.sin(phi) * Math.cos(theta);
+    camera.position.y = radius * Math.cos(phi);
+    camera.position.z = radius * Math.sin(phi) * Math.sin(theta);
+    camera.lookAt(target);
+
+    clampTarget(camera);
+}
+
 // Initial setup
 function setupCamera()
 {
@@ -83,16 +92,7 @@ function setupCamera()
     let prevX = 0;
     let prevY = 0;
 
-    function updateOrbit() {
-        camera.position.x = radius * Math.sin(phi) * Math.cos(theta);
-        camera.position.y = radius * Math.cos(phi);
-        camera.position.z = radius * Math.sin(phi) * Math.sin(theta);
-        camera.lookAt(target);
-
-        clampTarget(camera);
-    }
-    
-    updateOrbit();
+    updateOrbit(camera);
 
     // Movement keys
     window.addEventListener("keydown", (e) => keys[e.code] = true);
@@ -132,7 +132,7 @@ function setupCamera()
 
         phi = Math.max(0.1, Math.min(Math.PI - 0.1, phi));
 
-        updateOrbit();
+        updateOrbit(camera);
     });
     
     window.addEventListener("resize", () => {
@@ -146,5 +146,20 @@ function setupCamera()
     });
 
     return camera;
+}
 
+// Used for orbiting
+let orbitEnabled = false;
+function toggleIdleOrbit() {
+    orbitEnabled = !orbitEnabled;
+    return orbitEnabled;
+}
+function updateIdleOrbit(delta) {
+
+    if (orbitEnabled) {
+        const orbitSpeed = 0.2; // radians per second (tweak this)
+        theta += orbitSpeed * delta;
+
+        updateOrbit(camera);
+    }
 }

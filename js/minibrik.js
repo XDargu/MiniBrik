@@ -425,6 +425,7 @@ function renderScene(){
 
   updateStrafe(camera, delta);
   updateLightingTransition(scene, renderer, delta);
+  updateIdleOrbit(delta);
 
   requestAnimationFrame(renderScene);
   renderer.render(scene,camera);

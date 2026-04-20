@@ -220,6 +220,35 @@ function initUI() {
     }
   });
 
+  // UI toggle
+  const uiBtn = document.getElementById("uiToggle");
+  
+  let isUIHidden = false;
+  uiBtn.addEventListener("click", async () => {
+    isUIHidden = !isUIHidden;
+  
+    if (isUIHidden) {
+      document.body.classList.toggle("hide-ui", true);
+      uiBtn.textContent = "Show UI";
+    } else {
+      document.body.classList.toggle("hide-ui", false);
+      uiBtn.textContent = "Hide UI";
+    }
+  });
+
+  // Orbit toggle
+  const orbitBtn = document.getElementById("orbitToggle");
+  
+  orbitBtn.addEventListener("click", async () => {
+    let isOrbiting = toggleIdleOrbit();
+  
+    if (isOrbiting) {
+      orbitBtn.textContent = "Orbit: on";
+    } else {
+      orbitBtn.textContent = "Orbit: off";
+    }
+  });
+
   // Audio toggle
   let audioEnabled = true;
 

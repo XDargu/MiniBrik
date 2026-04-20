@@ -15,6 +15,12 @@ body {
   padding: 12px;
   border-radius: 10px;
   color: white;
+  transition: opacity 0.5s;
+}
+
+.hide-ui #ui {
+    opacity: 0;
+    pointer-events: none;
 }
 
 button {
@@ -110,10 +116,22 @@ button {
   background: rgba(0,0,0,0.6);
   color: white;
   border-radius: 6px;
+  transition: opacity 0.5s;
 }
 
 #controls button:hover {
   background: rgba(0,0,0,0.9);
+}
+
+.hide-ui #controls button:not(#uiToggle)
+{
+    opacity: 0;
+    pointer-events: none;
+}
+
+.hide-ui #uiToggle
+{
+    opacity: 0.5;
 }
 
 #brickButtons {
