@@ -65,8 +65,15 @@ function initLoad() {
   const hash = location.hash.slice(1);
   if (!hash) return;
 
-  const state = decodeState(hash);
-  loadState(state);
+  try {
+    const state = decodeState(hash);
+    loadState(state);
+  }
+  catch(e)
+  {
+    console.error("Cannot decode state from URL")
+    console.error(e)
+  }
 }
 
 function loadState(state)
