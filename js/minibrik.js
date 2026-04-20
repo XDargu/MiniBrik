@@ -5,6 +5,7 @@ let colliders = [];
 let currentBrick = 0;
 let currentColor = COLORS[0];
 let rotation = 0;
+let blockOffset = 0;
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -339,11 +340,21 @@ function updatePreviewPos()
   const p=hits[0].point;
   const [w,d]=getFootprint(currentBrick, rotation);
 
-  const x=snap(p.x);
-  const y=snap(p.y * 3);
-  const z=snap(p.z);
-
   const def = BRICKS[currentBrick];
+
+  // Offset, to select which block we use as pivot
+  blockOffset = blockOffset % (def.w * def.d);
+  const offsetX = blockOffset % def.w;
+  const offsetZ = Math.floor(blockOffset / def.w);
+
+  const rotatedOffsetX = -Math.cos(rotation * Math.PI / 180) * offsetX  + Math.sin(rotation * Math.PI / 180) * offsetZ;
+  const rotatedOffsetZ = -Math.cos(rotation * Math.PI / 180) * offsetZ  - Math.sin(rotation * Math.PI / 180) * offsetX;
+
+  console.log(Math.sin(rotation * Math.PI / 180))
+
+  const x=snap(p.x + rotatedOffsetX);
+  const y=snap(p.y * 3);
+  const z=snap(p.z + rotatedOffsetZ);
 
   const res = computePlacement(x, y, z, w, d, def.h, rotation);
   const realPos = computeBrickPos(x,res.y,z,w,d,rotation);

@@ -31,6 +31,11 @@ window.addEventListener("keydown", (e) => {
     updatePreview();
     updatePreviewPos();
   }
+  if (e.key.toLowerCase() === "e") {
+    blockOffset = blockOffset + 1;
+    updatePreview();
+    updatePreviewPos();
+  }
   if (e.key.toLowerCase() === "z")
   {
     if (undo())
@@ -65,6 +70,7 @@ function initUI() {
     btn.appendChild(img);
     btn.onclick = () => {
       currentBrick = id;
+      blockOffset = 0;
       updatePreview();
       updateActive();
     };
@@ -185,6 +191,7 @@ function initUI() {
     {
         loadState({ settings: defaultGlobalSettings, bricks: [] });
         updateShareURL();
+        updateActive();
     }
   });
 
