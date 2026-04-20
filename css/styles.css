@@ -31,16 +31,32 @@ button {
   cursor: pointer;
 }
 
+#brickButtons {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
 .brick-button img {
     margin: 0;
 }
 
 .brick-button {
     position: relative;
-    padding: 0;
+    padding: 0px;
     height: 64px;
     margin-bottom: 5px;
     background: #92c0db;
+    transition: padding 0.1s;
+}
+
+.brick-button:hover:not(.active) {
+    background: #6eabce;
+    padding: 3px 0px;
+}
+
+.brick-button.active {
+    padding: 3px 0px;
 }
 
 .brick-button span {
@@ -96,12 +112,34 @@ button {
   font-family: sans-serif;
 }
 
-#presetButtons {
-    margin-top:8px;
+#colorButtons button {
+    padding: 10px 12px;
+    transition: padding 0.1s;
+}
+
+#colorButtons button:hover:not(.active) {
+    padding: 12px 12px;
+}
+
+#colorButtons button.active {
+    outline: 2px solid #128bd3;
+    padding: 12px 12px;
 }
 
 #presetButtons button {
     padding: 4px 8px;
+    background-color: #ffffff73;
+    color: rgb(39, 39, 39);
+    transition: background-color 0.1;
+}
+
+#presetButtons button:hover:not(.active) {
+    background-color: #c2e2ff73;
+}
+
+#presetButtons .active {
+    background-color: #128bd3;
+    color: rgb(219, 219, 219);
 }
 
 #controls {
@@ -134,12 +172,11 @@ button {
     opacity: 0.5;
 }
 
-#brickButtons {
+#blockConfig {
     display: flex;
-    overflow-x: auto;
-    overflow-y: hidden;
+    justify-content: space-between;
+    margin-top: 8px;
 }
-
 
 /* Scroll bar */
 /* width */
