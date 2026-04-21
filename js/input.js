@@ -66,12 +66,12 @@ function initUI() {
    }
    if (e.key.toLowerCase() === "z")
    {
-     if (undo())
+     if (!isBuilding && undo())
          playFromPool(soundPools.remove)
    }
    if (e.key.toLowerCase() === "y")
    {
-     if (redo())
+     if (!isBuilding && redo())
          playFromPool(soundPools.place)
    }
 
