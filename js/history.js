@@ -1,49 +1,82 @@
 // Undo / Redo
 
+let nextBrickId = 1;
 let blockHistory = [];
 const redoStack = [];
+let bricks = new Map(); // idInternal to brick
 
 function pushHistory(entry){
   blockHistory.push(entry);
   redoStack.length = 0;
 }
 
-function undo(){
-  const h = blockHistory.pop();
-  if(!h) return false;
+function undo() {
+  const op = blockHistory.pop();
+  if (!op) return false;
 
-  scene.remove(h.group);
-  redoStack.push(h);
+  redoStack.push(op);
 
-  // Remove collider
-  const colIdx = colliders.indexOf(h.collider);
-  colliders.splice(colIdx, 1);
+  switch (op.type) {
+
+    case "add": {
+      removeBlock(op.idInternal, true);
+      break;
+    }
+    case "remove": {
+      const b = op.before;
+      placeBlock(b.id, b.x, b.y, b.z, b.r, b.c, op.idInternal, true);
+      break;
+    }
+    case "paint": {
+      paintBlock(op.idInternal, op.before, true);
+      break;
+    }
+  }
+
+  rebuild();
+  updateShareURL();
+  updatePreview();
+  updatePreviewPos();
+  return true;
+}
+
+function redo() {
+  const op = redoStack.pop();
+  if (!op) return false;
+
+  // push back into history
+  blockHistory.push(op);
+
+  switch (op.type) {
+
+    case "add": {
+      const b = op.after;
+      placeBlock(b.id, b.x, b.y, b.z, b.r, b.c, op.idInternal, true);
+      break;
+    }
+    case "remove": {
+      removeBlock(op.idInternal, true);
+      break;
+    }
+    case "paint": {
+      paintBlock(op.idInternal, op.after, true);
+      break;
+    }
+  }
 
   rebuild();
   updateShareURL();
   return true;
 }
 
-function redo(){
-  const h = redoStack.pop();
-  if(!h) return false;
-
-  scene.add(h.group);
-  blockHistory.push(h);
-  colliders.push(h.collider);
-  const blockPos = computeBrickPos(h.x, h.y, h.z, h.w, h.d, h.r);
-  const def = BRICKS[h.id];
-  occupy(blockPos.x,h.y,blockPos.z,h.w,h.d,def.h);
-  updateShareURL();
-  return true;
-}
-
-function rebuild(){
+function rebuild() {
   occupied.clear();
-  for(const h of blockHistory){ 
+
+  for (const h of bricks.values()) {
     const def = BRICKS[h.id];
     const blockPos = computeBrickPos(h.x, h.y, h.z, h.w, h.d, h.r);
-    occupy(blockPos.x,h.y,blockPos.z,h.w,h.d, def.h);
+
+    occupy(blockPos.x, h.y, blockPos.z, h.w, h.d, def.h);
   }
 }
 
@@ -51,12 +84,12 @@ function clearHistory()
 {
     blockHistory.length = 0;
     redoStack.length = 0;
+    bricks.clear();
 }
-
 
 // Load and Store History
 function updateShareURL() {
-  const encoded = encodeState(globalSettings, blockHistory);
+  const encoded = encodeState(globalSettings, Array.from(bricks.values()));
   const url = `${location.origin}${location.pathname}#${encoded}`;
   history.replaceState(null, "", url);
 }
@@ -96,6 +129,7 @@ function loadFromHistory(deserializedHistory) {
 
   // reset everything
   clearHistory();
+  bricks.clear();
 
   // clear scene (keep base)
   for (let i = scene.children.length - 1; i >= 0; i--) {

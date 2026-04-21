@@ -26,11 +26,13 @@ colliders.push(base.body);
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
+let targetedBrickId = -1;
+
 const materialsByColor = new Map(COLORS.map((color) => {
     return [color, new THREE.MeshStandardMaterial({
         color, 
         roughness: 0.8,
-        emissive: (color == 0xffc94a || color == 0xe74c3d) ? new THREE.Color(color): null,
+        emissive: isLightColor(color) ? new THREE.Color(color): null,
         emissiveIntensity: color == 0xffc94a ? 3 : 2,
     })];
 }));
@@ -39,7 +41,9 @@ const materialsByColorDoubleSided = new Map(COLORS.map((color) => {
     return [color, new THREE.MeshStandardMaterial({
         color, 
         roughness: 0.8,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
+        emissive: isLightColor(color) ? new THREE.Color(color): null,
+        emissiveIntensity: color == 0xffc94a ? 3 : 2,
     })];
 }));
 
@@ -253,7 +257,7 @@ function createBrick(w,d,h,rot,color,type="box",hollowStud=false){
     group.rotation.x = Math.PI;
   }*/
 
-  if (color == 0xffc94a || color == 0xe74c3d)
+  if (isLightColor(color))
   {
     const light = new THREE.PointLight( color, color == 0xe74c3d ? 25 : 50, 10 );
     //light.castShadow = true;
@@ -271,11 +275,14 @@ function createBrick(w,d,h,rot,color,type="box",hollowStud=false){
 // PREVIEW
 // --------------------
 let preview;
+let deletionPreview;
+let paintingPreview;
 let previewState={x:0,z:0,y:0,valid:false};
 
 const sphere = new THREE.SphereGeometry( 0.3, 16, 16 );
-const material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
-const previewTarget = new THREE.Mesh( sphere, material );
+const previewMaterial = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
+const deletionMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000, transparent: true, opacity: 0.5 } );
+const previewTarget = new THREE.Mesh( sphere, previewMaterial );
 scene.add(previewTarget)
 
 function updatePreview(){
@@ -342,7 +349,52 @@ function updatePreviewPos()
   if(!hits.length) return;
 
   const p=hits[0].point;
+  targetedBrickId = hits[0].object?.userData?.brickId;
   const [w,d]=getFootprint(currentBrick, rotation);
+
+  if (targetedBrickId && isDeleting)
+  {
+    const targetBrick = bricks.get(targetedBrickId);
+    if (deletionPreview != targetBrick.group)
+    {
+        if (deletionPreview)
+            applyColor(deletionPreview.idInternal, deletionPreview.c);
+
+        if (targetBrick.group)
+            applyMaterial(targetBrick.idInternal, deletionMaterial.clone());
+
+        deletionPreview = targetBrick;
+    }
+    return;
+  }
+  else
+  {
+    if (deletionPreview)
+        applyColor(deletionPreview.idInternal, deletionPreview.c);
+    deletionPreview = null;
+  }
+
+  if (targetedBrickId && isPainting)
+  {
+    const targetBrick = bricks.get(targetedBrickId);
+
+    if (paintingPreview != targetBrick.group)
+    {
+        if (paintingPreview)
+            applyColor(paintingPreview.idInternal, paintingPreview.c);
+
+        if (targetBrick.group)
+            applyColor(targetBrick.idInternal, currentColor);
+
+        paintingPreview = targetBrick;
+    }
+    return;
+  }
+  {
+    if (paintingPreview)
+        applyColor(paintingPreview.idInternal, paintingPreview.c);
+    paintingPreview = null;
+  }
 
   const def = BRICKS[currentBrick];
 
@@ -377,7 +429,101 @@ function updatePreviewPos()
   updatePreviewColor(res.valid);
 }
 
-function placeBlock(brickId, x, y, z, rot, color)
+function applyMaterial(idInternal, material)
+{
+    const h = bricks.get(idInternal);
+    if (!h) return;
+    
+    h.group.traverse(o => {
+        if (o.material) {
+            o.material = material;
+        }
+    });
+}
+
+function applyColor(idInternal, color)
+{
+    const h = bricks.get(idInternal);
+    if (!h) return;
+
+    const def = BRICKS[h.id];
+
+    h.group.traverse(o => {
+        if (o.material) {
+            o.material = def.type == "dish" ? materialsByColorDoubleSided.get(color) : materialsByColor.get(color);
+        }
+    });
+}
+
+
+function paintBlock(idInternal, color, ignoreHistory = false)
+{
+    const h = bricks.get(idInternal);
+    const prevCol = h.c;
+
+    if (prevCol == color) return false;
+
+    // For painting light blocks, the best option is to fully swap the block
+    if (isLightColor(color) || isLightColor(prevCol))
+    {
+        const {id,x,y,z,r,idInternal} = h;
+
+        removeBlock(idInternal, true);
+        placeBlock(id, x, y, z, r, color, idInternal, true);
+    }
+    else
+    {
+        h.c = color;
+        applyColor(idInternal, color);
+    }
+
+    if (!ignoreHistory)
+    {
+        pushHistory({
+            type: "paint",
+            idInternal,
+            before: prevCol,
+            after: color,
+        });
+    }
+
+    return true;
+}
+
+function removeBlock(idInternal, ignoreHistory = false)
+{
+    const h = bricks.get(idInternal);
+    if (!h) return;
+  
+    if (!ignoreHistory)
+    {
+        pushHistory({
+            type: "remove",
+            idInternal,
+            before: {
+                id: h.id,
+                x: h.x,
+                y: h.y,
+                z: h.z,
+                r: h.r,
+                c: h.c
+            }
+        });
+    }
+  
+    scene.remove(h.group);
+
+    const idx = colliders.indexOf(h.collider);
+    if (idx !== -1)
+        colliders.splice(idx, 1);
+
+    bricks.delete(idInternal);
+
+    rebuild();
+    updateShareURL();
+}
+
+function placeBlock(brickId, x, y, z, rot, color, forcedId = null, ignoreHistory = false)
 {
     const [w,d]=getFootprint(brickId, rot);
 
@@ -393,13 +539,14 @@ function placeBlock(brickId, x, y, z, rot, color)
 
     scene.add(group);
 
-    //console.log("oth: ", w, d, rot)
-    //console.log("coords: ", x,y,z)
-    //console.log(blockPos)
+    const idInternal = forcedId || nextBrickId++; // Unique brick ID
+
+    obj.body.userData.brickId = idInternal;
 
     colliders.push(obj.body);
     occupy(blockPos.x, y, blockPos.z, w, d, def.h);
     const h = {
+        idInternal: idInternal,
         id: brickId,
         c: color,
         x: x,
@@ -411,7 +558,23 @@ function placeBlock(brickId, x, y, z, rot, color)
         group: group,
         collider: obj.body,
     };
-    pushHistory(h);
+    bricks.set(h.idInternal, h);
+
+    if (!ignoreHistory)
+    {
+        pushHistory({
+            type: "add",
+            idInternal: idInternal,
+            after: {
+                id: h.id,
+                x: h.x,
+                y: h.y,
+                z: h.z,
+                r: h.r,
+                c: h.c
+            }
+        });
+    }
 
     return h;
 }

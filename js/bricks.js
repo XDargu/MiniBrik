@@ -68,6 +68,10 @@ const COLORS = [
   0xe74c3d, // soft red
 ];
 
+function isLightColor(color) {
+    return color == 0xffc94a || color == 0xe74c3d;
+}
+
 function colorToIndex(hex) {
   return COLORS.indexOf(hex);
 }

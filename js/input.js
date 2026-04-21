@@ -1,3 +1,6 @@
+isPainting = false;
+isDeleting = false;
+
 window.addEventListener("mousemove", (e) => {
   const rect = renderer.domElement.getBoundingClientRect();
 
@@ -15,10 +18,30 @@ window.addEventListener("click", (e) => {
   if (e.target.closest("#controls")) return;
 
   const { x, z, y, valid } = previewState;
-  if (!valid) return;
 
-  placeBlock(currentBrick, x, y, z, rotation, currentColor);
-  playFromPool(soundPools.place)
+  if (isDeleting)
+  {
+    if (targetedBrickId);
+    {
+        removeBlock(targetedBrickId);
+        playFromPool(soundPools.remove)
+    }
+  }
+  else if (isPainting)
+  {
+    if (targetedBrickId)
+    {
+        if (paintBlock(targetedBrickId, currentColor))
+            playFromPool(soundPools.place)
+    }
+  }
+  else
+  {
+    if (!valid) return;
+
+    placeBlock(currentBrick, x, y, z, rotation, currentColor);
+    playFromPool(soundPools.place)
+  }
 
   updateShareURL();
   updatePreview();
@@ -31,20 +54,15 @@ function initUI() {
   window.addEventListener("keydown", (e) => {
    if (e.key.toLowerCase() === "r") {
      rotation = (rotation + 90) % 360;
-     updatePreview();
-     updatePreviewPos();
    }
    if (e.key.toLowerCase() === "c") {
      const currentIdx = COLORS.indexOf(currentColor);
      currentColor = COLORS[(currentIdx + 1) % COLORS.length];
-     updatePreview();
      updateActive();
      updateThumbnailsColor();
    }
    if (e.key.toLowerCase() === "e") {
      blockOffset = blockOffset + 1;
-     updatePreview();
-     updatePreviewPos();
    }
    if (e.key.toLowerCase() === "z")
    {
@@ -56,6 +74,20 @@ function initUI() {
      if (redo())
          playFromPool(soundPools.place)
    }
+
+   isDeleting = keys["ShiftLeft"];
+   isPainting = keys["ControlLeft"];
+
+   updatePreview();
+   updatePreviewPos();
+  });
+
+  window.addEventListener("keyup", (e) => {
+    isDeleting = keys["ShiftLeft"];
+    isPainting = keys["ControlLeft"];
+
+    updatePreview();
+    updatePreviewPos();
   });
 
   const brickButtonsDiv = document.getElementById("brickButtons");
@@ -97,7 +129,7 @@ function initUI() {
   COLORS.forEach((color) => {
     const btn = document.createElement("button");
     btn.style.background = `#${color.toString(16).padStart(6, "0")}`;
-    if (color == 0xffc94a || color == 0xe74c3d)
+    if (isLightColor(color))
     {
         btn.style.boxShadow = `0px 0px 10px 3px #${color.toString(16).padStart(6, "0")}`;
     }
