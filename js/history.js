@@ -88,10 +88,19 @@ function clearHistory()
 }
 
 // Load and Store History
+let updateUrTimeout = null;
 function updateShareURL() {
-  const encoded = encodeState(globalSettings, Array.from(bricks.values()));
-  const url = `${location.origin}${location.pathname}#${encoded}`;
-  history.replaceState(null, "", url);
+
+  // Interval to prevent overwhelming the browser
+  clearInterval(updateUrTimeout);
+  updateUrTimeout = setInterval(() => {
+    // Sort map by order of creation by default
+    const sorted = new Map([...bricks.entries()].sort());
+    const encoded = encodeState(globalSettings, Array.from(sorted.values()));
+    const url = `${location.origin}${location.pathname}#${encoded}`;
+    history.replaceState(null, "", url);
+  }, 100)
+  
 }
 
 function initLoad() {
@@ -129,7 +138,6 @@ function loadFromHistory(deserializedHistory) {
 
   // reset everything
   clearHistory();
-  bricks.clear();
 
   // clear scene (keep base)
   for (let i = scene.children.length - 1; i >= 0; i--) {
