@@ -102,7 +102,7 @@ function loadFromHistory(deserializedHistory) {
     const obj = scene.children[i];
     if (obj === preview) continue;
     if (obj === previewTarget) continue;
-    if (obj === base) continue;
+    if (obj === base.group) continue;
     if (obj.isLight) continue;
     scene.remove(obj);
   }

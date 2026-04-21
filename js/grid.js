@@ -36,7 +36,7 @@ function computePlacement(x, y, z, w, d, h, rot) {
 
   for (const c of fullCells) {
     if (isOutsideGrid(c.x,c.y,c.z) || isOccupied(c.x, c.y, c.z)) {
-      return { valid: false, y: 0 };
+      return { valid: false, y: y };
     }
   }
 

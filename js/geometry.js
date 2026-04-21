@@ -183,5 +183,5 @@ function addBase() {
 
   group.add(base);
 
-  return group;
+  return { group, body: base };
 }

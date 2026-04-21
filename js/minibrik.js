@@ -20,8 +20,8 @@ let camera = setupCamera();
 let audio = setupAudio(camera);
 
 let base = addBase();
-scene.add(base);
-colliders.push(base);
+scene.add(base.group);
+colliders.push(base.body);
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
@@ -355,7 +355,7 @@ function updatePreviewPos()
   const rotatedOffsetZ = -Math.cos(rotation * Math.PI / 180) * offsetZ  - Math.sin(rotation * Math.PI / 180) * offsetX;
 
   const x=snap(p.x + rotatedOffsetX);
-  const y=snap(p.y * 3);
+  const y=snap(p.y * 3 + 0.5);
   const z=snap(p.z + rotatedOffsetZ);
 
   const res = computePlacement(x, y, z, w, d, def.h, rotation);
