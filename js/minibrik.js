@@ -520,7 +520,6 @@ function removeBlock(idInternal, ignoreHistory = false)
     bricks.delete(idInternal);
 
     rebuild();
-    updateShareURL();
 }
 
 function placeBlock(brickId, x, y, z, rot, color, forcedId = null, ignoreHistory = false)
